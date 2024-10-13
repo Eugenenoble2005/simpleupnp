@@ -5,7 +5,9 @@
 #include <netinet/in.h>
 #include <sstream>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
+#include <utility>
 
 void Server::HTTPServer::StartServer() {
   m_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -57,7 +59,4 @@ void Server::HTTPServer::AcceptConnection(int &new_socket) {
     
   }
 }
-int main() {
-  Server::HTTPServer http_server;
-  http_server.StartListen();
-}
+

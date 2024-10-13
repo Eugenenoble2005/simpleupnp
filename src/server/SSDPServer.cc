@@ -1,4 +1,5 @@
 #include "../includes/SSDPServer.h"
+#include "../includes/HTTPServer.h"
 #include <array>
 #include <cstdio>
 #include <locale>
@@ -9,9 +10,17 @@
 
 Server::SSDPServer::SSDPServer() {
   InitUdpSocket();
-  // listen for search requests on seperate thread
+  Server::HTTPServer http_server = *new Server::HTTPServer();
+  //listen for search requests over UDP on seperate thread
   std::thread listener_thread(&Server::SSDPServer::ListenOnUdpSocket, this);
+
+  //start http server on seperate thread
+  std::thread http_server_thread(&Server::HTTPServer::StartListen,http_server);
+  //start http server on seperate thread
+
+  //run threads independently
   listener_thread.detach();
+  http_server_thread.detach();
 }
 
 // copied with love  from stackoveflow
