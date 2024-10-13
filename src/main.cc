@@ -4,7 +4,10 @@
 int main()
 {
   Server::SSDPServer ssdp_server;
-  while(true){
+
+  ssdp_server.Hello();
+  while(true)
+  {
     
   }
 }
