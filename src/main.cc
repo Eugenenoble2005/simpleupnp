@@ -4,5 +4,7 @@
 int main()
 {
   Server::SSDPServer ssdp_server;
-  ssdp_server.Advertise();
+  while(true){
+    
+  }
 }

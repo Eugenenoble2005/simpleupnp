@@ -1,15 +1,22 @@
 #include "../includes/SSDPServer.h"
 #include <cstdio>
+#include <locale>
 #include <string>
 #include <sys/socket.h>
-
+#include <array>
+#include <sys/types.h>
+#include <thread>
 
 Server::SSDPServer::SSDPServer()
 {
   InitUdpSocket();
+  //listen for search requests on seperate thread
+  std::thread listener_thread(&Server::SSDPServer::ListenOnUdpSocket,this);
+
+  listener_thread.detach();
 }
 
-//copied from stackoveflow
+//copied with love  from stackoveflow
 void Server::SSDPServer::InitUdpSocket()
 {
     //create UDP Socket
@@ -42,28 +49,106 @@ void Server::SSDPServer::InitUdpSocket()
     setsockopt(udpSocket,IPPROTO_IP ,IP_ADD_MEMBERSHIP ,(char *)&group , sizeof(group) );
 }
 
-
-void Server::SSDPServer::Advertise()
+/**
+INFORM OTHER DEVICES WE ARE JOINING THE NETWORK
+**/
+void Server::SSDPServer::Advertise(std::string NTS)
 {
-  std::string message = 
-    "NOTIFY * HTTP/1.1\r\n"
-    "HOST: " + SSDP_ADDR + ":" + std::to_string(SSDP_PORT) + "\r\n"
-    "CACHE-CONTROL: max-age=180\r\n"
-    "LOCATION: http://localhost:1000\r\n"
-    "NT: upnp:rootdevice\r\n"    // Type of device
-    "NTS: ssdp:alive\r\n"        // Notification type
-    "USN: uuid:device-UUID::upnp:rootdevice\r\n"
-    "SERVER: Arch/Linux UPnP/1.1 product/version\r\n"
-    "\r\n";
+    const u_int device_count = 3;
+   if(upnp_device == nullptr){
+     fprintf(stderr,"Could not init UPNP device. Exiting" );
+     exit(0);
+   } 
+    //root device notifications
+    //NT - USN KEY VALUE PAIR
+    struct Server::NTUSNValuePair root_device_one;
+    root_device_one.NT = "upnp:rootdevice";
+    root_device_one.USN = "uuid:"+upnp_device->GUID+"::upnp:rootdevice";
 
-  const char * messageStream = message.c_str();
-  printf("%s", messageStream);
-  //send message
+    struct Server::NTUSNValuePair root_device_two;
+    root_device_two.NT = "uuid:"+upnp_device->GUID;
+    root_device_two.USN = "uuid:"+upnp_device->GUID;
+
+    struct Server::NTUSNValuePair root_device_three;
+    root_device_three.NT = "urn:schemas-upnp-org:device:MediaServer:1";
+    root_device_three.USN = "uuid:"+upnp_device->GUID+"::urn:schemas-upnp-org:device:MediaServer:1";
+  
+    const struct Server::NTUSNValuePair devices[device_count] = {
+      root_device_one,
+      root_device_two,
+      root_device_three,
+    };
+
+    for(int i = 0; i < device_count; ++i)
+    {
+      const struct NTUSNValuePair device = devices[i];
+      SendDatagram(
+        NotifcationMessage(device.NT,device.USN,NTS ).c_str()
+      );
+    }
+   //send main device notifcation
+   
+}
+
+void Server::SSDPServer::SendDatagram(const char * messageStream)
+{
   sendto(udpSocket,messageStream ,strlen(messageStream) ,0 ,(struct sockaddr *)&groupSock  , sizeof(groupSock) );
+}
+std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string USN, std::string NTS)
+{
+   std::string notifcation_message_template  = 
+      "NOTIFY * HTTP/1.1\r\n"
+      "HOST: " + SSDP_ADDR + ":" + std::to_string(SSDP_PORT) + "\r\n"
+      "CACHE-CONTROL: max-age=180\r\n"
+      "LOCATION: http://localhost:1000\r\n"
+      "NT: " + NT + "\r\n"    // Type of device
+      "NTS:" + NTS + "\r\n"        // Notification type
+      "USN: " + USN + "\r\n"
+      "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
+      "\r\n";
+   return notifcation_message_template;
+}
 
+/*
+INFORM OTHER DEVICES WE ARE LEAVING THE NETWORK
+*/
+void Server::SSDPServer::GoodBye()
+{
+  //Advertise with ssdp:byebye
+  Advertise("ssdp:byebye");
+}
+
+//listen for search requests
+void Server::SSDPServer::ListenOnUdpSocket()
+{
+  struct sockaddr_in si_other;
+  socklen_t slen = sizeof(si_other);
+  char buffer[1024];
+  while(true)
+  {
+    recvfrom(udpSocket,buffer ,1024 ,0 ,(struct sockaddr *)&si_other ,&slen );
+    printf("%s", buffer);
+  }
+}
+
+void Server::SSDPServer::Hello()
+{
+  //Advertise with ssdp:hello
+  Advertise("ssdp:hello");
 }
 
 Server::SSDPServer::~SSDPServer()
 {
-  
+  delete upnp_device;
 }
+
+
+
+
+//UPNP DEVICE STRUCT
+Server::UPNPDevice::UPNPDevice() 
+{
+   GUID = generate_uuid();
+}
+
+
