@@ -1,5 +1,6 @@
 #include "../includes/HTTPServer.h"
 #include <arpa/inet.h>
+#include <asm-generic/socket.h>
 #include <cstdio>
 #include <iostream>
 #include <netinet/in.h>
@@ -13,6 +14,7 @@
 
 void Server::HTTPServer::StartServer() {
   m_socket = socket(AF_INET, SOCK_STREAM, 0);
+  setsockopt(m_socket,SOL_SOCKET ,SO_REUSEADDR ,&opt ,sizeof(&opt) );
   if (m_socket < 0) {
     printf("Could not create socket for HTTP server");
     exit(0);
@@ -62,7 +64,13 @@ void Server::HTTPServer::AcceptConnection(int &new_socket) {
 
 void Server::HTTPServer::HandleHttpRequest(char *buffer) {
   const char * log = "RECEIVED THE FOLLOWING BUFFER:";
-  std::cout << log << "\n";
+  std::cout << log << std::endl;
   const std::string  reply_buffer = "<root>hello world from xml</root>";
   write(m_new_socket,reply_buffer.c_str(), size(reply_buffer));
+}
+
+void Server::HTTPServer::CloseServer()
+{
+  close(m_new_socket);
+  close(m_socket);
 }

@@ -10,15 +10,15 @@
 
 Server::SSDPServer::SSDPServer() {
   InitUdpSocket();
-  Server::HTTPServer http_server = *new Server::HTTPServer();
-  //listen for search requests over UDP on seperate thread
+  // listen for search requests over UDP on seperate thread
   std::thread listener_thread(&Server::SSDPServer::ListenOnUdpSocket, this);
 
-  //start http server on seperate thread
-  std::thread http_server_thread(&Server::HTTPServer::StartListen,http_server);
-  //start http server on seperate thread
+  // start http server on seperate thread
+  std::thread http_server_thread(&Server::HTTPServer::StartListen,
+                                 *http_server);
+  // start http server on seperate thread
 
-  //run threads independently
+  // run threads independently
   listener_thread.detach();
   http_server_thread.detach();
 }
@@ -171,7 +171,9 @@ void Server::SSDPServer::Hello() {
   Advertise("ssdp:hello", false);
 }
 
-Server::SSDPServer::~SSDPServer() { delete upnp_device; }
+Server::SSDPServer::~SSDPServer() {
+  delete upnp_device;
+}
 
 // UPNP DEVICE STRUCT
 Server::UPNPDevice::UPNPDevice() { GUID = generate_uuid(); }

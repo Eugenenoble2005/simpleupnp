@@ -16,6 +16,7 @@ private:
   int m_socket;
   int m_new_socket;
   long m_incomingMessage;
+  const int opt = 1;
   struct sockaddr_in m_socketAddress;
   unsigned int m_socketAddress_len;
   std::string m_serverMessage;

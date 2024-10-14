@@ -1,6 +1,7 @@
 #ifndef SSDP_SERVER_H
 #define SSDP_SERVER_H
 #include "../helpers/uuid_generator.h"
+#include "HTTPServer.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
 #include <cstdio>
@@ -39,6 +40,7 @@ private:
   struct sockaddr_in localSock;
   struct ip_mreq group;
   const struct Server::UPNPDevice *upnp_device = new Server::UPNPDevice();
+  const Server::HTTPServer * http_server = new HTTPServer();
 
   void SendDatagram(const char *messageStream);
   int udpSocket;
