@@ -158,7 +158,7 @@ void Server::SSDPServer::ListenOnUdpSocket() {
   while (true) {
     recvfrom(udpSocket, buffer, 1024, 0, (struct sockaddr *)&si_other, &slen);
     buffer_str = buffer;
-    std::cout << buffer_str << std::endl;
+    //`std::cout << buffer_str << std::endl;
     if (buffer_str.find("M-SEARCH") != std::string::npos) {
       // found a search request, we must respond to it, NTS can be anything here
       // since it is not part of the search response header.

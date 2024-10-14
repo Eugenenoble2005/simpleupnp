@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:BasicDevice:1</deviceType>
+    <friendlyName>Minimal UPnP Device</friendlyName>
+    <manufacturer>Example Manufacturer</manufacturer>
+    <manufacturerURL>http://www.example.com</manufacturerURL>
+    <modelDescription>Minimal UPnP device for demonstration</modelDescription>
+    <modelName>ExampleModel</modelName>
+    <modelNumber>1</modelNumber>
+    <modelURL>http://www.example.com/model</modelURL>
+    <UDN>uuid:12345678-1234-1234-1234-123456789012</UDN>
+
+    </device>
+</root>
