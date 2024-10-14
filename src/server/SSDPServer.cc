@@ -178,4 +178,3 @@ Server::SSDPServer::~SSDPServer() {
 }
 
 // UPNP DEVICE STRUCT
-Server::UPNPDevice::UPNPDevice() { GUID = generate_uuid(); }

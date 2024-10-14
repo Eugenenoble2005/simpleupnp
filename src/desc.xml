@@ -7,9 +7,9 @@
 
   <device>
     <deviceType>urn:schemas-upnp-org:device:BasicDevice:1</deviceType>
-    <friendlyName>Minimal UPnP Device</friendlyName>
-    <manufacturer>Example Manufacturer</manufacturer>
-    <manufacturerURL>http://www.example.com</manufacturerURL>
+    <friendlyName>Simpleupnp</friendlyName>
+    <manufacturer>Noble Eugene</manufacturer>
+    <manufacturerURL>https://www.github.com/eugenenoble2005</manufacturerURL>
     <modelDescription>Minimal UPnP device for demonstration</modelDescription>
     <modelName>ExampleModel</modelName>
     <modelNumber>1</modelNumber>
@@ -18,3 +18,22 @@
 
     </device>
 </root>
+
+
+<!-- <?xml version="1.0"?> -->
+<!-- <root xmlns="urn:schemas-upnp-org:device-1-0"> -->
+<!-- <specVersion> -->
+<!-- <major>1</major> -->
+<!-- <minor>0</minor> -->
+<!-- </specVersion> -->
+<!-- <device> -->
+<!-- <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType> -->
+<!-- <friendlyName>short user-friendly title</friendlyName> -->
+<!-- <manufacturer>manufacturer name</manufacturer> -->
+<!-- <manufacturerURL>URL to manufacturer site</manufacturerURL> -->
+<!-- <modelDescription>long user-friendly title</modelDescription> -->
+<!-- <modelName>Main</modelName> -->
+<!-- <modelNumber>1</modelNumber> -->
+<!-- <modelURL>URL to model site</modelURL> -->
+<!-- </device> -->
+<!-- </root> -->

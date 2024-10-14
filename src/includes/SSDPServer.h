@@ -1,6 +1,6 @@
 #ifndef SSDP_SERVER_H
 #define SSDP_SERVER_H
-#include "../helpers/uuid_generator.h"
+#include "../includes/helpers/uuid_generator.h";
 #include "HTTPServer.h"
 #include <arpa/inet.h>
 #include <asm-generic/socket.h>
@@ -17,7 +17,11 @@ public:
   std::string GUID;
   std::string OS_VERSION;
   std::string LOCATION;
+  std::string DESCRIPTION;
   UPNPDevice();
+
+  private:
+    void SetDescription();
 };
 struct NTUSNValuePair {
   std::string USN;
