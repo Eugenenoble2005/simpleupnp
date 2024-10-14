@@ -1,9 +1,11 @@
 #include "../includes/HTTPServer.h"
 #include <arpa/inet.h>
 #include <cstdio>
-#include <stdlib.h>
+#include <iostream>
 #include <netinet/in.h>
 #include <sstream>
+#include <stdlib.h>
+#include <string>
 #include <sys/socket.h>
 #include <thread>
 #include <unistd.h>
@@ -24,7 +26,7 @@ void Server::HTTPServer::StartServer() {
 Server::HTTPServer::HTTPServer() {
   m_socketAddress.sin_family = AF_INET;
   m_socketAddress.sin_port = htons(20054);
-  //to allow LAN access
+  // to allow LAN access
   m_socketAddress.sin_addr.s_addr = INADDR_ANY;
   m_socketAddress_len = sizeof(m_socketAddress);
   StartServer();
@@ -39,15 +41,14 @@ void Server::HTTPServer::StartListen() {
     exit(0);
   }
   int bytes_recieved;
-  while(true){
+  while (true) {
     AcceptConnection(m_new_socket);
     char buffer[BUFFER_SIZE] = {0};
-    bytes_recieved = read(m_new_socket,buffer,BUFFER_SIZE);
-    if(bytes_recieved < 0){
+    bytes_recieved = read(m_new_socket, buffer, BUFFER_SIZE);
+    if (bytes_recieved < 0) {
       printf("Failed to read bytes from connection");
     }
-    printf("Recieved some data");
-    printf("%s", buffer);
+    HandleHttpRequest(buffer);
     close(m_new_socket);
   }
 }
@@ -56,7 +57,12 @@ void Server::HTTPServer::AcceptConnection(int &new_socket) {
       accept(m_socket, (sockaddr *)&m_socketAddress, &m_socketAddress_len);
   if (new_socket < 0) {
     printf("failed to accept incoming connections on http server");
-    
   }
 }
 
+void Server::HTTPServer::HandleHttpRequest(char *buffer) {
+  const char * log = "RECEIVED THE FOLLOWING BUFFER:";
+  std::cout << log << "\n";
+  const std::string  reply_buffer = "<root>hello world from xml</root>";
+  write(m_new_socket,reply_buffer.c_str(), size(reply_buffer));
+}

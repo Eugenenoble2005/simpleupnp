@@ -110,7 +110,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT,
       SSDP_ADDR + ":" + std::to_string(SSDP_PORT) +
       "\r\n"
       "CACHE-CONTROL: max-age=180\r\n"
-      "LOCATION: http://localhost:1000\r\n"
+      "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
       "NT: " +
       NT +
       "\r\n" // Type of device
@@ -126,7 +126,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT,
   std::string search_response_message_template =
       " HTTP/1.1\r\n"
       "CACHE-CONTROL: max-age=180\r\n"
-      "LOCATION: http://localhost:1000\r\n"
+      "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
       "ST: upnp:rootdevice"
       "\r\n" // Notification type
       "USN: " +

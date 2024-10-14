@@ -21,6 +21,7 @@ private:
   std::string m_serverMessage;
   void StartServer();
   void AcceptConnection(int & new_socket);
+  void HandleHttpRequest(char * buffer);
   
 };
 } // namespace Server
