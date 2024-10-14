@@ -127,7 +127,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT,
       " HTTP/1.1\r\n"
       "CACHE-CONTROL: max-age=180\r\n"
       "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
-      "ST: upnp:rootdevice"
+      "ST:" + NT +
       "\r\n" // Notification type
       "USN: " +
       USN +
@@ -157,6 +157,7 @@ void Server::SSDPServer::ListenOnUdpSocket() {
   while (true) {
     recvfrom(udpSocket, buffer, 1024, 0, (struct sockaddr *)&si_other, &slen);
     buffer_str = buffer;
+    std::cout << buffer_str << std::endl;
     if (buffer_str.find("M-SEARCH") != std::string::npos) {
       // found a search request, we must respond to it, NTS can be anything here
       // since it is not part of the search response header.

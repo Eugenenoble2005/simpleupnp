@@ -63,8 +63,7 @@ void Server::HTTPServer::AcceptConnection(int &new_socket) {
 }
 
 void Server::HTTPServer::HandleHttpRequest(char *buffer) {
-  const char * log = "RECEIVED THE FOLLOWING BUFFER:";
-  std::cout << log << std::endl;
+  //std::cout << buffer << std::endl;
   const std::string  reply_buffer = "<root>hello world from xml</root>";
   write(m_new_socket,reply_buffer.c_str(), size(reply_buffer));
 }
