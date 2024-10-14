@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdio>
 #include <locale>
+#include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -52,7 +53,7 @@ void Server::SSDPServer::InitUdpSocket() {
   bind(udpSocket, (struct sockaddr *)&localSock, sizeof(localSock));
 
   group.imr_multiaddr.s_addr = inet_addr(SSDP_ADDR.c_str());
-  group.imr_interface.s_addr = inet_addr("192.168.175.220");
+  group.imr_interface.s_addr = INADDR_ANY;
 
   setsockopt(udpSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&group,
              sizeof(group));
