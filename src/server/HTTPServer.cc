@@ -13,17 +13,18 @@
 #include <thread>
 #include <unistd.h>
 #include <utility>
-
+#include "../helpers/logger.h"
 void Server::HTTPServer::StartServer() {
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
     setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(&opt));
     if (m_socket < 0) {
         printf("Could not create socket for HTTP server");
+        LogError("Could not bind HTTP Server to port 20054. Aborting...");
         exit(0);
     }
 
     if (bind(m_socket, (sockaddr*)&m_socketAddress, m_socketAddress_len) < 0) {
-        printf("Cannot connect socket to address");
+        LogError("Could not connect to HTTP socket. Aborting...");
         exit(0);
     }
 }
@@ -38,7 +39,6 @@ Server::HTTPServer::HTTPServer() {
 Server::HTTPServer::~HTTPServer() {}
 
 void Server::HTTPServer::StartListen() {
-    printf("Started listening");
     const int BUFFER_SIZE = 30270;
     if (listen(m_socket, 20) < 0) {
         printf("Failed to listen on socket");
@@ -59,15 +59,17 @@ void Server::HTTPServer::StartListen() {
 void Server::HTTPServer::AcceptConnection(int& new_socket) {
     new_socket = accept(m_socket, (sockaddr*)&m_socketAddress, &m_socketAddress_len);
     if (new_socket < 0) {
-        printf("failed to accept incoming connections on http server");
+        LogError("Could not accept connections to HTTP server on port 20054. Aborting...");
+        exit(0);
     }
 }
 
 void Server::HTTPServer::HandleHttpRequest(char* buffer) {
     //std::cout << buffer << std::endl;
+    LogInfo("HTTP GET RECIEVED");
     std::ifstream file("desc.xml");
     if (!file.is_open()) {
-        std::cerr << "Could not read descriptions file" << std::endl;
+        LogError("Could not read description XML File. Aborting...");
         exit(0);
     }
     std::stringstream file_buffer;

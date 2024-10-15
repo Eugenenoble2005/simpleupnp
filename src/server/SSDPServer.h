@@ -44,7 +44,7 @@ namespace Server {
         struct sockaddr_in               localSock;
         struct ip_mreq                   group;
         const struct Server::UPNPDevice* upnp_device = new Server::UPNPDevice();
-        const Server::HTTPServer*        http_server = new HTTPServer();
+       Server::HTTPServer*        http_server = new HTTPServer();
 
         void                             SendDatagram(const char* messageStream);
         int                              udpSocket;
