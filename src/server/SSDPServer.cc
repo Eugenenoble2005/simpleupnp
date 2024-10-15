@@ -60,13 +60,12 @@ void Server::SSDPServer::InitUdpSocket() {
 INFORM OTHER DEVICES WE ARE JOINING THE NETWORK
 **/
 void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch) {
-    const u_int device_count = 3;
+    const u_int device_count = 7;
     if (upnp_device == nullptr) {
         LogError("Could not init UPNP Device. Aborting...");
         exit(0); 
     }
-    // root device notifications
-    // NT - USN KEY VALUE PAIR
+    //root device notifications
     struct Server::NTUSNValuePair root_device_one;
     root_device_one.NT  = "upnp:rootdevice";
     root_device_one.USN = "uuid:" + upnp_device->GUID + "::upnp:rootdevice";
@@ -76,13 +75,34 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch) {
     root_device_two.USN = "uuid:" + upnp_device->GUID;
 
     struct Server::NTUSNValuePair root_device_three;
-    root_device_three.NT  = "urn:schemas-upnp-org:service:MediaServer:1";
-    root_device_three.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:service:MediaServer:1";
+    root_device_three.NT  = "urn:schemas-upnp-org:device:MediaServer:1";
+    root_device_three.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer:1";
 
+    //embedded device notifications
+    struct Server::NTUSNValuePair embedded_device_one;
+    embedded_device_one.NT = "uuid:"+upnp_device->GUID;
+    embedded_device_one.USN = "uuid:"+upnp_device->GUID;
+
+    struct Server::NTUSNValuePair embedded_device_two;
+    embedded_device_two.NT = "urn:schemas-upnp-org:MediaServer:1";
+    embedded_device_two.USN = "uuid"+upnp_device->GUID+"::urn:schemas-upnp-org:device:MediaServer::1";
+
+    //service notifications
+    struct Server::NTUSNValuePair service_one;
+    service_one.NT = "urn-schemas-upnp-org:service:ConnectionManager:1";
+    service_one.USN  = "uuid:"+upnp_device->GUID+"::urn:schemas-upnp-org:service:ConnectionManager:1";
+
+    struct Server::NTUSNValuePair service_two;
+    service_one.NT = "urn-schemas-upnp-org-service:ContentDirectory:1";
+    service_two.USN = "uuid:"+upnp_device->GUID+"::urn-schemas-upnp-org:service:ContentDirectory:1";
     const struct Server::NTUSNValuePair devices[device_count] = {
         root_device_one,
         root_device_two,
         root_device_three,
+        embedded_device_one,
+        embedded_device_two,
+        service_one,
+        service_two,
     };
 
     for (int i = 0; i < device_count; ++i) {
