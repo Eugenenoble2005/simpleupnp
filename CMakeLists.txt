@@ -1,6 +1,6 @@
 project(simpleupnp)
 
-include_directories(src/includes/ src/includes/helpers)
+include_directories(src/server src/helpers)
 
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/desc.xml

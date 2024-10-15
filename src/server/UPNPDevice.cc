@@ -1,3 +1,5 @@
-#include "../includes/SSDPServer.h"
+#include "SSDPServer.h"
 
-Server::UPNPDevice::UPNPDevice() { GUID = generate_uuid(); }
+Server::UPNPDevice::UPNPDevice() {
+    GUID = generate_uuid();
+}

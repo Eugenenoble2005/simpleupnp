@@ -1,5 +1,5 @@
-#include "../includes/SSDPServer.h"
-#include "../includes/HTTPServer.h"
+#include "SSDPServer.h"
+#include "HTTPServer.h"
 #include <array>
 #include <cstdio>
 #include <locale>
@@ -79,9 +79,9 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch) {
   root_device_two.USN = "uuid:" + upnp_device->GUID;
 
   struct Server::NTUSNValuePair root_device_three;
-  root_device_three.NT = "urn:schemas-upnp-org:device:MediaServer:1";
+  root_device_three.NT = "urn:schemas-upnp-org:service:MediaServer:1";
   root_device_three.USN = "uuid:" + upnp_device->GUID +
-                          "::urn:schemas-upnp-org:device:MediaServer:1";
+                          "::urn:schemas-upnp-org:service:MediaServer:1";
 
   const struct Server::NTUSNValuePair devices[device_count] = {
       root_device_one,
@@ -128,11 +128,14 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT,
       " HTTP/1.1\r\n"
       "CACHE-CONTROL: max-age=180\r\n"
       "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
-      "ST:" + NT +
-      "\r\n" // Notification type
+      "ST: " +
+      NT +
+      "\r\n"
       "USN: " +
       USN +
       "\r\n"
+      "EXT: \r\n"
+      "DATE: now\n"
       "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
       "\r\n";
   // return the appropriate template depending on whether or not we are
@@ -158,11 +161,12 @@ void Server::SSDPServer::ListenOnUdpSocket() {
   while (true) {
     recvfrom(udpSocket, buffer, 1024, 0, (struct sockaddr *)&si_other, &slen);
     buffer_str = buffer;
-    //`std::cout << buffer_str << std::endl;
     if (buffer_str.find("M-SEARCH") != std::string::npos) {
       // found a search request, we must respond to it, NTS can be anything here
       // since it is not part of the search response header.
       Advertise("any", true);
+    } else {
+      std::cout << buffer_str << std::endl;
     }
     buffer_str.clear();
   }
@@ -173,8 +177,6 @@ void Server::SSDPServer::Hello() {
   Advertise("ssdp:hello", false);
 }
 
-Server::SSDPServer::~SSDPServer() {
-  delete upnp_device;
-}
+Server::SSDPServer::~SSDPServer() { delete upnp_device; }
 
 // UPNP DEVICE STRUCT
