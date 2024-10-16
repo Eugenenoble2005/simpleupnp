@@ -67,28 +67,25 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 void Server::HTTPServer::HandleHttpRequest(char* buffer) {
     //std::cout << buffer << std::endl;
     HttpRequest http_request = ParseHttpRequest(buffer);
-    std::cout << http_request.method << std::endl;
-    std::cout << http_request.uri << std::endl;
     LogInfo("HTTP GET RECIEVED");
-    std::ifstream file("desc.xml");
-    if (!file.is_open()) {
-        LogError("Could not read description XML File. Aborting...");
-        exit(0);
-    }
-    std::stringstream file_buffer;
-    file_buffer << file.rdbuf();
-    const std::string reply_buffer = file_buffer.str();
-
     std::stringstream response;
-    response << "HTTP/1.1 200 OK\r\n";
-    response << "Content-Type: text/xml\r\n";
-    response << "Content-Length: " << reply_buffer.size() << "\r\n";
-    response << "Connection: close\r\n";
-    response << "\r\n"; // End of headers
+    if (http_request.uri == "/desc.xml") {
+        std::ifstream file("desc.xml");
+        if (!file.is_open()) {
+            LogError("Could not read description XML File. Aborting...");
+            exit(0);
+        }
+        std::stringstream file_buffer;
+        file_buffer << file.rdbuf();
+        const std::string reply_buffer = file_buffer.str();
+        response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/xml\r\n";
+        response << "Content-Length: " << reply_buffer.size() << "\r\n";
+        response << "Connection: close\r\n";
+        response << "\r\n"; // End of headers
+        response << reply_buffer;
+    }
 
-    // Add the actual XML content after headers
-    response << reply_buffer;
-    // Send the response to the client
     const std::string full_response = response.str();
     write(m_new_socket, full_response.c_str(), full_response.size());
 }
@@ -111,7 +108,7 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
             while (std::getline(request_line, item, ' ')) {
                 word_count++;
                 //second word;
-                if (word_count  == 1) {
+                if (word_count == 1) {
                     http_request.uri = item;
                 }
             }
