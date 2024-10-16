@@ -4,6 +4,12 @@
 #include <string>
 
 namespace Server {
+
+    struct HttpRequest {
+        std::string method;
+        std::string uri;
+        std::string content;
+    };
     class HTTPServer {
       public:
         HTTPServer();
@@ -24,6 +30,7 @@ namespace Server {
         void               StartServer();
         void               AcceptConnection(int& new_socket);
         void               HandleHttpRequest(char* buffer);
+        struct HttpRequest ParseHttpRequest(char* buffer);
     };
 } // namespace Server
 

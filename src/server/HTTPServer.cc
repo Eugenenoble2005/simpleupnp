@@ -41,7 +41,7 @@ Server::HTTPServer::~HTTPServer() {}
 void Server::HTTPServer::StartListen() {
     const int BUFFER_SIZE = 30270;
     if (listen(m_socket, 20) < 0) {
-        printf("Failed to listen on socket");
+        LogError("Failed to listen on UDP Server. Aborting...");
         exit(0);
     }
     int bytes_recieved;
@@ -50,7 +50,7 @@ void Server::HTTPServer::StartListen() {
         char buffer[BUFFER_SIZE] = {0};
         bytes_recieved           = read(m_new_socket, buffer, BUFFER_SIZE);
         if (bytes_recieved < 0) {
-            printf("Failed to read bytes from connection");
+            LogError("Failed to read bytes from connection");
         }
         HandleHttpRequest(buffer);
         close(m_new_socket);
@@ -65,7 +65,10 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 }
 
 void Server::HTTPServer::HandleHttpRequest(char* buffer) {
-    std::cout << buffer << std::endl;
+    //std::cout << buffer << std::endl;
+    HttpRequest http_request = ParseHttpRequest(buffer);
+    std::cout << http_request.method << std::endl;
+    std::cout << http_request.uri << std::endl;
     LogInfo("HTTP GET RECIEVED");
     std::ifstream file("desc.xml");
     if (!file.is_open()) {
@@ -85,12 +88,37 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
 
     // Add the actual XML content after headers
     response << reply_buffer;
-
     // Send the response to the client
     const std::string full_response = response.str();
     write(m_new_socket, full_response.c_str(), full_response.size());
 }
 
+struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
+    std::string        buffer_str(buffer);
+    std::stringstream  buffer_stream(buffer_str);
+    std::string        line;
+    struct HttpRequest http_request;
+    int                index = -1;
+    while (std::getline(buffer_stream, line)) {
+        index++;
+        //HTTP METHOD ACCORDING TO STANDARD
+        if (index == 0) {
+            //probably clumsy but the specs say i can only expect a GET OR A POST
+            http_request.method = line.rfind("GET") == 0 ? "GET" : "POST";
+            std::stringstream request_line(line);
+            int               word_count = -1;
+            std::string       item;
+            while (std::getline(request_line, item, ' ')) {
+                word_count++;
+                //second word;
+                if (word_count  == 1) {
+                    http_request.uri = item;
+                }
+            }
+        }
+    }
+    return http_request;
+}
 void Server::HTTPServer::CloseServer() {
     close(m_new_socket);
     close(m_socket);
