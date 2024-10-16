@@ -59,11 +59,11 @@ void Server::SSDPServer::InitUdpSocket() {
 /**
 INFORM OTHER DEVICES WE ARE JOINING THE NETWORK
 **/
-void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch) {
+void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, struct sockaddr_in* sock_other) {
     const u_int device_count = 7;
     if (upnp_device == nullptr) {
         LogError("Could not init UPNP Device. Aborting...");
-        exit(0); 
+        exit(0);
     }
     //root device notifications
     struct Server::NTUSNValuePair root_device_one;
@@ -80,39 +80,40 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch) {
 
     //embedded device notifications
     struct Server::NTUSNValuePair embedded_device_one;
-    embedded_device_one.NT = "uuid:"+upnp_device->GUID;
-    embedded_device_one.USN = "uuid:"+upnp_device->GUID;
+    embedded_device_one.NT  = "uuid:" + upnp_device->GUID;
+    embedded_device_one.USN = "uuid:" + upnp_device->GUID;
 
     struct Server::NTUSNValuePair embedded_device_two;
-    embedded_device_two.NT = "urn:schemas-upnp-org:MediaServer:1";
-    embedded_device_two.USN = "uuid"+upnp_device->GUID+"::urn:schemas-upnp-org:device:MediaServer::1";
+    embedded_device_two.NT  = "urn:schemas-upnp-org:MediaServer:1";
+    embedded_device_two.USN = "uuid" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer::1";
 
     //service notifications
     struct Server::NTUSNValuePair service_one;
-    service_one.NT = "urn-schemas-upnp-org:service:ConnectionManager:1";
-    service_one.USN  = "uuid:"+upnp_device->GUID+"::urn:schemas-upnp-org:service:ConnectionManager:1";
+    service_one.NT  = "urn-schemas-upnp-org:service:ConnectionManager:1";
+    service_one.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:service:ConnectionManager:1";
 
     struct Server::NTUSNValuePair service_two;
-    service_one.NT = "urn-schemas-upnp-org-service:ContentDirectory:1";
-    service_two.USN = "uuid:"+upnp_device->GUID+"::urn-schemas-upnp-org:service:ContentDirectory:1";
+    service_one.NT                                            = "urn-schemas-upnp-org-service:ContentDirectory:1";
+    service_two.USN                                           = "uuid:" + upnp_device->GUID + "::urn-schemas-upnp-org:service:ContentDirectory:1";
     const struct Server::NTUSNValuePair devices[device_count] = {
-        root_device_one,
-        root_device_two,
-        root_device_three,
-        embedded_device_one,
-        embedded_device_two,
-        service_one,
-        service_two,
+        root_device_one, root_device_two, root_device_three, embedded_device_one, embedded_device_two, service_one, service_two,
     };
 
     for (int i = 0; i < device_count; ++i) {
         const struct NTUSNValuePair device = devices[i];
-        SendDatagram(NotifcationMessage(device.NT, device.USN, NTS, advertiseForSearch).c_str());
+        SendDatagram(NotifcationMessage(device.NT, device.USN, NTS, advertiseForSearch).c_str(), sock_other);
     }
 }
 
-void Server::SSDPServer::SendDatagram(const char* messageStream) {
-    sendto(udpSocket, messageStream, strlen(messageStream), 0, (struct sockaddr*)&groupSock, sizeof(groupSock));
+void Server::SSDPServer::SendDatagram(const char* messageStream, struct sockaddr_in* sock_other) {
+    if (sock_other == nullptr) {
+
+        sendto(udpSocket, messageStream, strlen(messageStream), 0, (struct sockaddr*)&groupSock, sizeof(groupSock));
+    } else {
+        LogInfo("ATTEMPTING TO UNICAST SINCE SEARCH");
+        //not being sent
+        sendto(udpSocket, messageStream, strlen(messageStream), 0, (struct sockaddr*)sock_other, sizeof(*sock_other));
+    }
 }
 std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string USN, std::string NTS, bool isSearchResponse) {
     std::string notifcation_message_template = "NOTIFY * HTTP/1.1\r\n"
@@ -173,10 +174,11 @@ void Server::SSDPServer::ListenOnUdpSocket() {
         if (buffer_str.find("M-SEARCH") != std::string::npos) {
             // found a search request, we must respond to it, NTS can be anything here
             // since it is not part of the search response header.
-            Advertise("any", true);
+            //si_other pointer is passed becuase we must unicast the reponse of the search
+            Advertise("any", true, &si_other);
             LogInfo("RESPONDING TO SSDP M-SEARCH");
         } else {
-           // std::cout << buffer_str << std::endl;
+            // std::cout << buffer_str << std::endl;
         }
         buffer_str.clear();
     }

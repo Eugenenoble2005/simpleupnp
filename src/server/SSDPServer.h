@@ -46,11 +46,11 @@ namespace Server {
         const struct Server::UPNPDevice* upnp_device = new Server::UPNPDevice();
        Server::HTTPServer*        http_server = new HTTPServer();
 
-        void                             SendDatagram(const char* messageStream);
+        void                             SendDatagram(const char* messageStream, struct sockaddr_in * sock_addr);
         int                              udpSocket;
 
         void                             InitUdpSocket();
-        void                             Advertise(std::string NTS, bool advertiseForSearch);
+        void                             Advertise(std::string NTS, bool advertiseForSearch, struct sockaddr_in * sock_addr = nullptr);
         std::string                      NotifcationMessage(std::string NT, std::string USN, std::string NTS, bool isSearchResponse);
         void                             ListenOnUdpSocket();
     };

@@ -65,7 +65,7 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 }
 
 void Server::HTTPServer::HandleHttpRequest(char* buffer) {
-    //std::cout << buffer << std::endl;
+    std::cout << buffer << std::endl;
     LogInfo("HTTP GET RECIEVED");
     std::ifstream file("desc.xml");
     if (!file.is_open()) {
