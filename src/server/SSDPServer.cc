@@ -85,7 +85,7 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, str
 
     struct Server::NTUSNValuePair embedded_device_two;
     embedded_device_two.NT  = "urn:schemas-upnp-org:MediaServer:1";
-    embedded_device_two.USN = "uuid" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer::1";
+    embedded_device_two.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer::1";
 
     //service notifications
     struct Server::NTUSNValuePair service_one;
@@ -106,12 +106,11 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, str
 }
 
 void Server::SSDPServer::SendDatagram(const char* messageStream, struct sockaddr_in* sock_other) {
+    //multicast notification if there is no reciever address provider
     if (sock_other == nullptr) {
-
         sendto(udpSocket, messageStream, strlen(messageStream), 0, (struct sockaddr*)&groupSock, sizeof(groupSock));
     } else {
-        LogInfo("ATTEMPTING TO UNICAST SINCE SEARCH");
-        //not being sent
+        //unicast otherwise
         sendto(udpSocket, messageStream, strlen(messageStream), 0, (struct sockaddr*)sock_other, sizeof(*sock_other));
     }
 }
@@ -120,7 +119,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
                                                "HOST: " +
         SSDP_ADDR + ":" + std::to_string(SSDP_PORT) +
         "\r\n"
-        "CACHE-CONTROL: max-age=180\r\n"
+        "CACHE-CONTROL: max-age=1800\r\n"
         "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
         "NT: " +
         NT +
@@ -134,8 +133,8 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
         "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
         "\r\n";
 
-    std::string search_response_message_template = " HTTP/1.1\r\n"
-                                                   "CACHE-CONTROL: max-age=180\r\n"
+    std::string search_response_message_template = " HTTP/1.1 200 OK\r\n"
+                                                   "CACHE-CONTROL: max-age=1800\r\n"
                                                    "LOCATION: http://192.168.100.2:20054/desc.xml\r\n"
                                                    "ST: " +
         NT +
