@@ -120,7 +120,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
         SSDP_ADDR + ":" + std::to_string(SSDP_PORT) +
         "\r\n"
         "CACHE-CONTROL: max-age=1800\r\n"
-        "LOCATION: http://localhost:20054/desc.xml\r\n"
+        "LOCATION: http://192.168.100.2:2005/desc.xml\r\n"
         "NT: " +
         NT +
         "\r\n" // Type of device
@@ -133,19 +133,18 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
         "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
         "\r\n";
 
-    std::string search_response_message_template = " HTTP/1.1 200 OK\r\n"
+    std::string search_response_message_template = "HTTP/1.1 200 OK\r\n"
                                                    "CACHE-CONTROL: max-age=1800\r\n"
-                                                   "LOCATION: http://192.168.195.221:20054/desc.xml\r\n"
+                                                   "DATE: Thu, 01 Dec 1994 16:00:00 GMT\r\n"
+                                                   "EXT: \r\n"
+                                                   "LOCATION: http://192.168.100.2:2005/desc.xml\r\n"
+                                                   "SERVER: Arch-Linux/6.7 UPnP/1.0 SimpleUPNP/1.0\r\n"
                                                    "ST: " +
         NT +
         "\r\n"
         "USN: " +
-        USN +
-        "\r\n"
-        "EXT: \r\n"
-        "DATE: now\n"
-        "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
-        "\r\n";
+        USN + "\r\n"
+    "\r\n";
     // return the appropriate template depending on whether or not we are
     // responing to a search
     return isSearchResponse ? search_response_message_template : notifcation_message_template;

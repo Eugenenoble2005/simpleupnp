@@ -31,6 +31,7 @@ namespace Server {
         void               AcceptConnection(int& new_socket);
         void               HandleHttpRequest(char* buffer);
         struct HttpRequest ParseHttpRequest(char* buffer);
+        std::string ContentDirectoryXMLResponse(std::string payload);
     };
 } // namespace Server
 

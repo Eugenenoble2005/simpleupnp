@@ -7,6 +7,7 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
+#include <stdexcept>
 #include <stdlib.h>
 #include <string>
 #include <sys/socket.h>
@@ -30,7 +31,7 @@ void Server::HTTPServer::StartServer() {
 }
 Server::HTTPServer::HTTPServer() {
     m_socketAddress.sin_family = AF_INET;
-    m_socketAddress.sin_port   = htons(20054);
+    m_socketAddress.sin_port   = htons(2005);
     // to allow LAN access
     m_socketAddress.sin_addr.s_addr = INADDR_ANY;
     m_socketAddress_len             = sizeof(m_socketAddress);
@@ -67,9 +68,10 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 void Server::HTTPServer::HandleHttpRequest(char* buffer) {
     //std::cout << buffer << std::endl;
     HttpRequest http_request = ParseHttpRequest(buffer);
-    LogInfo("HTTP GET RECIEVED");
+    LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
+    LogInfo(http_request.content);
     std::stringstream response;
-    if (http_request.uri == "/desc.xml") {
+    if (http_request.uri == "/desc.xml" && http_request.method == "GET") {
         std::ifstream file("desc.xml");
         if (!file.is_open()) {
             LogError("Could not read description XML File. Aborting...");
@@ -84,10 +86,13 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
+    } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
+        std::string response = ContentDirectoryXMLResponse(http_request.content);
     }
 
     const std::string full_response = response.str();
     write(m_new_socket, full_response.c_str(), full_response.size());
+    response.clear();
 }
 
 struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
@@ -95,7 +100,8 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
     std::stringstream  buffer_stream(buffer_str);
     std::string        line;
     struct HttpRequest http_request;
-    int                index = -1;
+    int                index                       = -1;
+    bool               checkSubsequentLinesForBody = false;
     while (std::getline(buffer_stream, line)) {
         index++;
         //HTTP METHOD ACCORDING TO STANDARD
@@ -113,10 +119,23 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
                 }
             }
         }
+        if (checkSubsequentLinesForBody == true) {
+
+            http_request.content += line + "\n";
+        }
+        //check if headers have ended by finding the first empty line. Only do this for the first line incase there are other blank lines elsewhere.
+        if (line == "\r" && checkSubsequentLinesForBody == false) {
+            //next line will contain the body
+            checkSubsequentLinesForBody = true;
+        }
     }
     return http_request;
 }
-void Server::HTTPServer::CloseServer() {
+
+std::string Server::HTTPServer::ContentDirectoryXMLResponse(std::string payload) {}
+
+
+void        Server::HTTPServer::CloseServer() {
     close(m_new_socket);
     close(m_socket);
 }
