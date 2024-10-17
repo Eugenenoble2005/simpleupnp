@@ -64,14 +64,14 @@
       <service>
         <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
         <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
-        <SCPDURL>/ContentDirectory/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/scpd.xml</SCPDURL>
+        <SCPDURL>/ContentDirectory/scpd.xml</SCPDURL>
         <controlURL>/ContentDirectory/control.xml</controlURL>
         <eventSubURL>/ContentDirectory/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/event.xml</eventSubURL>
       </service>
       <service>
         <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
         <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
-        <SCPDURL>/ConnectionManager/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/scpd.xml</SCPDURL>
+        <SCPDURL>/ConnectionManager/scpd.xml</SCPDURL>
         <controlURL>/ConnectionManager/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/control.xml</controlURL>
         <eventSubURL>/ConnectionManager/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/event.xml</eventSubURL>
       </service>

@@ -86,8 +86,37 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
-    } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
-        std::string response = ContentDirectoryXMLResponse(http_request.content);
+    } else if (http_request.uri == "/ContentDirectory/scpd.xml" && http_request.method == "GET") {
+        std::ifstream file("content-directory-scpd.xml");
+        if (!file.is_open()) {
+            LogError("Failed to read Content directory description XML File. Aborting...");
+            exit(0);
+        }
+        std::stringstream file_buffer;
+        file_buffer << file.rdbuf();
+        const std::string reply_buffer = file_buffer.str();
+        response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/xml\r\n";
+        response << "Content-Length: " << reply_buffer.size() << "\r\n";
+        response << "Connection: close\r\n";
+        response << "\r\n"; // End of headers
+        response << reply_buffer;
+    } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
+        std::ifstream file("connection-manager-scpd.xml");
+        if (!file.is_open()) {
+            LogError("Failed to read Content directory description XML File. Aborting...");
+            exit(0);
+        }
+        std::stringstream file_buffer;
+        file_buffer << file.rdbuf();
+        const std::string reply_buffer = file_buffer.str();
+        response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/xml\r\n";
+        response << "Content-Length: " << reply_buffer.size() << "\r\n";
+        response << "Connection: close\r\n";
+        response << "\r\n"; // End of headers
+        response << reply_buffer;
+        std::cout << response.str();
     }
 
     const std::string full_response = response.str();
@@ -133,7 +162,6 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
 }
 
 std::string Server::HTTPServer::ContentDirectoryXMLResponse(std::string payload) {}
-
 
 void        Server::HTTPServer::CloseServer() {
     close(m_new_socket);
