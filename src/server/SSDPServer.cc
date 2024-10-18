@@ -16,7 +16,7 @@ Server::SSDPServer::SSDPServer() {
     std::thread listener_thread(&Server::SSDPServer::ListenOnUdpSocket, this);
 
     // start http server on seperate thread
-    std::thread http_server_thread(&Server::HTTPServer::StartListen, *http_server);
+    std::thread http_server_thread(&Server::HTTPServer::StartListen, http_server.get());
     // start http server on seperate thread
 
     // run threads independently
@@ -118,7 +118,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
     std::string notifcation_message_template = "NOTIFY * HTTP/1.1\r\n"
                                                "HOST: 239.255.255.250:1900\r\n"
                                                "CACHE-CONTROL: max-age = 1800\r\n"
-                                               "LOCATION: http://192.169.100.2:2005/desc.xml\r\n"
+                                               "LOCATION: http://" + upnp_device->IPV4_ADDRESS + ":2005/desc.xml\r\n"
                                                "NT: " +
         NT +
         "\r\n"
@@ -138,7 +138,7 @@ std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string U
     std::string search_response_message_template = "HTTP/1.1 200 OK\r\n"
                                                    "CACHE-CONTROL: max-age = 1800\r\n"
                                                    "EXT: \r\n"
-                                                   "LOCATION: http://192.168.100.2:2005/desc.xml\r\n"
+                                                   "LOCATION: http://" + upnp_device->IPV4_ADDRESS + ":2005/desc.xml \r\n"
                                                    "SERVER: unix/5.1 UPnP/2.0 simpleupnp/1.0 \r\n"
                                                    "ST: " +
         NT +
@@ -195,7 +195,7 @@ void Server::SSDPServer::Hello() {
 }
 
 Server::SSDPServer::~SSDPServer() {
-    delete upnp_device;
+    
 }
 
 // UPNP DEVICE STRUCT

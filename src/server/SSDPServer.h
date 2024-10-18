@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -24,7 +25,6 @@ namespace Server {
 
       private:
         void SetDescription();
-        void SetIpv4Address();
     };
     struct NTUSNValuePair {
         std::string USN;
@@ -46,9 +46,9 @@ namespace Server {
         struct sockaddr_in               groupSock;
         struct sockaddr_in               localSock;
         struct ip_mreq                   group;
-        const struct Server::UPNPDevice* upnp_device = new Server::UPNPDevice();
+        const struct std::unique_ptr<Server::UPNPDevice> upnp_device = std::make_unique<Server::UPNPDevice>();
         unsigned long  BOOT_ID = time(nullptr);
-       Server::HTTPServer*        http_server = new HTTPServer();
+        std::unique_ptr<Server::HTTPServer>  http_server = std::make_unique<Server::HTTPServer>();
 
         void                             SendDatagram(const char* messageStream, struct sockaddr_in * sock_addr);
         int                              udpSocket;

@@ -12,6 +12,6 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/content-directory-scpd.xml
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/connection-manager-scpd.xml
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-add_executable(simpleupnp src/main.cc src/server/SSDPServer.cc src/helpers/uuid_generator.cc src/server/HTTPServer.cc src/server/UPNPDevice.cc src/helpers/logger.cc)
+add_executable(simpleupnp src/main.cc src/server/SSDPServer.cc src/helpers/uuid_generator.cc src/server/HTTPServer.cc src/server/UPNPDevice.cc src/helpers/logger.cc src/helpers/ipv4_address.cc)
 
 
