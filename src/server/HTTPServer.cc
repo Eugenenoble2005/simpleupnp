@@ -116,7 +116,9 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
-        std::cout << response.str();
+    }
+    else if(http_request.uri == "/ContentDirectory/control.xml" && http_request.method=="POST"){
+        
     }
 
     const std::string full_response = response.str();
@@ -161,8 +163,9 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
     return http_request;
 }
 
-std::string Server::HTTPServer::ContentDirectoryXMLResponse(std::string payload) {}
-
+std::string Server::HTTPServer::ContentDirectoryXMLResponse(std::string payload) {
+    
+}
 void        Server::HTTPServer::CloseServer() {
     close(m_new_socket);
     close(m_socket);

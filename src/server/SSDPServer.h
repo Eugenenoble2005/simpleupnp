@@ -10,6 +10,7 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 namespace Server {
     struct UPNPDevice {
       public:
@@ -18,10 +19,12 @@ namespace Server {
         std::string OS_VERSION;
         std::string LOCATION;
         std::string DESCRIPTION;
+        std::string IPV4_ADDRESS;
         UPNPDevice();
 
       private:
         void SetDescription();
+        void SetIpv4Address();
     };
     struct NTUSNValuePair {
         std::string USN;
@@ -44,6 +47,7 @@ namespace Server {
         struct sockaddr_in               localSock;
         struct ip_mreq                   group;
         const struct Server::UPNPDevice* upnp_device = new Server::UPNPDevice();
+        unsigned long  BOOT_ID = time(nullptr);
        Server::HTTPServer*        http_server = new HTTPServer();
 
         void                             SendDatagram(const char* messageStream, struct sockaddr_in * sock_addr);

@@ -84,8 +84,8 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, str
     embedded_device_one.USN = "uuid:" + upnp_device->GUID;
 
     struct Server::NTUSNValuePair embedded_device_two;
-    embedded_device_two.NT  = "urn:schemas-upnp-org:MediaServer:1";
-    embedded_device_two.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer::1";
+    embedded_device_two.NT  = "urn:schemas-upnp-org:device:MediaServer:1";
+    embedded_device_two.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:device:MediaServer:1";
 
     //service notifications
     struct Server::NTUSNValuePair service_one;
@@ -93,7 +93,7 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, str
     service_one.USN = "uuid:" + upnp_device->GUID + "::urn:schemas-upnp-org:service:ConnectionManager:1";
 
     struct Server::NTUSNValuePair service_two;
-    service_one.NT                                            = "urn-schemas-upnp-org-service:ContentDirectory:1";
+    service_one.NT                                            = "urn-schemas-upnp-org:service:ContentDirectory:1";
     service_two.USN                                           = "uuid:" + upnp_device->GUID + "::urn-schemas-upnp-org:service:ContentDirectory:1";
     const struct Server::NTUSNValuePair devices[device_count] = {
         root_device_one, root_device_two, root_device_three, embedded_device_one, embedded_device_two, service_one, service_two,
@@ -116,34 +116,40 @@ void Server::SSDPServer::SendDatagram(const char* messageStream, struct sockaddr
 }
 std::string Server::SSDPServer::NotifcationMessage(std::string NT, std::string USN, std::string NTS, bool isSearchResponse) {
     std::string notifcation_message_template = "NOTIFY * HTTP/1.1\r\n"
-                                               "HOST: " +
-        SSDP_ADDR + ":" + std::to_string(SSDP_PORT) +
-        "\r\n"
-        "CACHE-CONTROL: max-age=1800\r\n"
-        "LOCATION: http://192.168.195.221:2005/desc.xml\r\n"
-        "NT: " +
+                                               "HOST: 239.255.255.250:1900\r\n"
+                                               "CACHE-CONTROL: max-age = 1800\r\n"
+                                               "LOCATION: http://192.169.100.2:2005/desc.xml\r\n"
+                                               "NT: " +
         NT +
-        "\r\n" // Type of device
-        "NTS:" +
+        "\r\n"
+        "NTS: " +
         NTS +
-        "\r\n" // Notification type
+        "\r\n"
+        "SERVER: unix/5.1 UPnP/2.0 simpleupnp/1.0\r\n"
         "USN: " +
         USN +
         "\r\n"
-        "SERVER: UPnP/1.1 simpleupnp/1.0\r\n"
+        "BOOTID.UPNP.ORG: " +
+        std::to_string(BOOT_ID) +
+        "\r\n"
+        "CONFIG.UPNP.ORG: 1\r\n"
         "\r\n";
 
     std::string search_response_message_template = "HTTP/1.1 200 OK\r\n"
-                                                   "CACHE-CONTROL: max-age=1800\r\n"
+                                                   "CACHE-CONTROL: max-age = 1800\r\n"
                                                    "EXT: \r\n"
-                                                   "LOCATION: http://192.168.195.221:2005/desc.xml\r\n"
-                                                   "SERVER: Arch-Linux/6.7 UPnP/1.0 SimpleUPNP/1.0\r\n"
+                                                   "LOCATION: http://192.168.100.2:2005/desc.xml\r\n"
+                                                   "SERVER: unix/5.1 UPnP/2.0 simpleupnp/1.0 \r\n"
                                                    "ST: " +
         NT +
         "\r\n"
         "USN: " +
         USN +
         "\r\n"
+        "BOOTID.UPNP.ORG: " +
+        std::to_string(BOOT_ID) +
+        "\r\n"
+        "CONFIG.UPNP.ORG: 1\r\n"
         "\r\n";
     // return the appropriate template depending on whether or not we are
     // responing to a search
