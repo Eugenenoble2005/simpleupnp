@@ -32,5 +32,7 @@ std::string GetIpV4Address(){
     }
   }
   freeifaddrs(interfaces);
+  if(ipv4_address == "127.0.0.1")
+    LogError("Could not obtain network interfaces. Are you connected to a wifi network?... Proceeding...");
   return ipv4_address;
 }

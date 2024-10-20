@@ -83,7 +83,8 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         response << "HTTP/1.1 200 OK\r\n";
         response << "Content-Type: text/xml\r\n";
         response << "Content-Length: " << reply_buffer.size() << "\r\n";
-        response << "Connection: close\r\n";
+        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n" ;
+      //  response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
     } else if (http_request.uri == "/ContentDirectory/scpd.xml" && http_request.method == "GET") {
@@ -97,8 +98,9 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         const std::string reply_buffer = file_buffer.str();
         response << "HTTP/1.1 200 OK\r\n";
         response << "Content-Type: text/xml\r\n";
+        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n" ;
         response << "Content-Length: " << reply_buffer.size() << "\r\n";
-        response << "Connection: close\r\n";
+      //  response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
@@ -111,9 +113,10 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         file_buffer << file.rdbuf();
         const std::string reply_buffer = file_buffer.str();
         response << "HTTP/1.1 200 OK\r\n";
+        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n"; 
         response << "Content-Type: text/xml\r\n";
         response << "Content-Length: " << reply_buffer.size() << "\r\n";
-        response << "Connection: close\r\n";
+      //  response << "Connection: close\r\n";
         response << "\r\n"; // End of headers
         response << reply_buffer;
     }
