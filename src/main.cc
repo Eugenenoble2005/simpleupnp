@@ -5,7 +5,7 @@
 #include <ostream>
 #include "server/SSDPServer.h"
 #include "helpers/logger.h"
-
+#include "helpers/global.h""
 std::atomic<bool> keepRunning = true;
 void signal_handler(int signal){
     if(signal == SIGINT || signal == SIGTERM){
@@ -14,7 +14,7 @@ void signal_handler(int signal){
 }
 int main() {
     Server::SSDPServer ssdp_server;
-
+    Global::SetContentDirectoryRoot("/home/noble/Videos");
     ssdp_server.Hello();
     std::signal(SIGINT,signal_handler);
     while (keepRunning) {

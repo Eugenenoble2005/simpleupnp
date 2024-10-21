@@ -187,7 +187,7 @@ void Server::SSDPServer::ListenOnUdpSocket() {
             //si_other pointer is passed becuase we must unicast the reponse of the search
             Advertise("any", true, &si_other);
             //specs say not to do this but it's the only way i could get some renderers to work like BubbleUPNP
-            Hello();
+            // Hello();
             LogInfo("RESPONDING TO SSDP M-SEARCH");
         } else {
             // std::cout << buffer_str << std::endl;
