@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <utility>
 #include "../helpers/logger.h"
+#include "ContentDirectory.h"
 void Server::HTTPServer::StartServer() {
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
     setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(&opt));
@@ -69,59 +70,15 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
     //std::cout << buffer << std::endl;
     HttpRequest http_request = ParseHttpRequest(buffer);
     LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
-    LogInfo(http_request.content);
     std::stringstream response;
     if (http_request.uri == "/desc.xml" && http_request.method == "GET") {
-        std::ifstream file("desc.xml");
-        if (!file.is_open()) {
-            LogError("Could not read description XML File. Aborting...");
-            exit(0);
-        }
-        std::stringstream file_buffer;
-        file_buffer << file.rdbuf();
-        const std::string reply_buffer = file_buffer.str();
-        response << "HTTP/1.1 200 OK\r\n";
-        response << "Content-Type: text/xml\r\n";
-        response << "Content-Length: " << reply_buffer.size() << "\r\n";
-        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n" ;
-      //  response << "Connection: close\r\n";
-        response << "\r\n"; // End of headers
-        response << reply_buffer;
+        DeliverStaticFile("desc.xml", response);
     } else if (http_request.uri == "/ContentDirectory/scpd.xml" && http_request.method == "GET") {
-        std::ifstream file("content-directory-scpd.xml");
-        if (!file.is_open()) {
-            LogError("Failed to read Content directory description XML File. Aborting...");
-            exit(0);
-        }
-        std::stringstream file_buffer;
-        file_buffer << file.rdbuf();
-        const std::string reply_buffer = file_buffer.str();
-        response << "HTTP/1.1 200 OK\r\n";
-        response << "Content-Type: text/xml\r\n";
-        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n" ;
-        response << "Content-Length: " << reply_buffer.size() << "\r\n";
-      //  response << "Connection: close\r\n";
-        response << "\r\n"; // End of headers
-        response << reply_buffer;
+        DeliverStaticFile("content-directory-scpd.xml", response);
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
-        std::ifstream file("connection-manager-scpd.xml");
-        if (!file.is_open()) {
-            LogError("Failed to read Content directory description XML File. Aborting...");
-            exit(0);
-        }
-        std::stringstream file_buffer;
-        file_buffer << file.rdbuf();
-        const std::string reply_buffer = file_buffer.str();
-        response << "HTTP/1.1 200 OK\r\n";
-        response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n"; 
-        response << "Content-Type: text/xml\r\n";
-        response << "Content-Length: " << reply_buffer.size() << "\r\n";
-      //  response << "Connection: close\r\n";
-        response << "\r\n"; // End of headers
-        response << reply_buffer;
-    }
-    else if(http_request.uri == "/ContentDirectory/control.xml" && http_request.method=="POST"){
-        
+        DeliverStaticFile("connection-manager-scpd.xml", response);
+    } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
+        Server::ContentDirectory::Control(http_request.content, response);
     }
 
     const std::string full_response = response.str();
@@ -166,10 +123,24 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
     return http_request;
 }
 
-std::string Server::HTTPServer::ContentDirectoryXMLResponse(std::string payload) {
-    
+void Server::HTTPServer::DeliverStaticFile(std::string file_name, std::stringstream& response) {
+    std::ifstream file(file_name);
+    if (!file.is_open()) {
+        LogError("Failed to read Content directory description XML File. Aborting...");
+        exit(0);
+    }
+    std::stringstream file_buffer;
+    file_buffer << file.rdbuf();
+    const std::string reply_buffer = file_buffer.str();
+    response << "HTTP/1.1 200 OK\r\n";
+    response << "Content-Type: text/xml\r\n";
+    response << "Server: " << "UPnP/1.0 DLANDOC/1.50 Platinum/1.0.5.13\r\n";
+    response << "Content-Length: " << reply_buffer.size() << "\r\n";
+    //  response << "Connection: close\r\n";
+    response << "\r\n"; // End of headers
+    response << reply_buffer;
 }
-void        Server::HTTPServer::CloseServer() {
+void Server::HTTPServer::CloseServer() {
     close(m_new_socket);
     close(m_socket);
 }

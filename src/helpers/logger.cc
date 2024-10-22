@@ -7,3 +7,7 @@ void LogInfo(std::string message)
 void LogError(std::string message){
   std::cerr <<  "\033[1;31m" << "[FATAL]" << message  << "\033[0m" << std::endl;
 }
+
+void LogWarning(std::string message){
+  std::cout << "\033[33m" << "[WARNING]" << message << "\033[0m" << std::endl;
+}

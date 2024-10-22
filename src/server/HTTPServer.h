@@ -1,6 +1,7 @@
 #ifndef HTTP_SERVER_H
 #define HTTP_SERVER_H
 #include <netinet/in.h>
+#include <sstream>
 #include <string>
 
 namespace Server {
@@ -31,7 +32,8 @@ namespace Server {
         void               AcceptConnection(int& new_socket);
         void               HandleHttpRequest(char* buffer);
         struct HttpRequest ParseHttpRequest(char* buffer);
-        std::string ContentDirectoryXMLResponse(std::string payload);
+        void               DeliverStaticFile(std::string file_name, std::stringstream &response);
+        std::string        ContentDirectoryXMLResponse(std::string payload);
     };
 } // namespace Server
 
