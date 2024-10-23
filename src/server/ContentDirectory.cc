@@ -1,6 +1,8 @@
 #include "ContentDirectory.h"
 #include "../helpers/logger.h"
+#include <cstring>
 #include <tinyxml2.h>
+#include <sstream>
 //public facing control
 void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
     LogInfo("Received a content directory request");
@@ -8,9 +10,7 @@ void Server::ContentDirectory::Control(std::string& request, std::stringstream& 
 
     ContentDirectoryAction content_directory_action = GetAction(request);
     switch (content_directory_action) {
-        case Server::ContentDirectoryAction::Browse:
-            Browse(request, response);
-            break;
+        case Server::ContentDirectoryAction::Browse: Browse(request, response); break;
         default: return;
     }
     return;
@@ -20,14 +20,61 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     tinyxml2::XMLDocument doc;
     //no need to verify nodes anymore cause it's been done.
     doc.Parse(request.c_str());
-
     tinyxml2::XMLElement* u_browse_element = doc.FirstChildElement("s:Envelope")->FirstChildElement("s:Body")->FirstChildElement("u:Browse");
+    const std::string     ObjectID         = u_browse_element->FirstChildElement("ObjectID")->GetText();
+    //Build xml response;
+    //standard SOAP
+    tinyxml2::XMLDocument responseDocument;
 
-    const std::string     ObjectID = u_browse_element->FirstChildElement("ObjectID")->GetText();
+    //<s:Envelope>
+    tinyxml2::XMLElement* s_Envelope = responseDocument.NewElement("s:Envelope");
+    s_Envelope->SetAttribute("s:encodingStyle", "http://schemas.xmlsoap.org/soap/encoding/");
+    s_Envelope->SetAttribute("xmlns:s", "http://schemas.xmlsoap.org/soap/envelope/");
+    responseDocument.InsertFirstChild(s_Envelope);
 
-    const std::string     BrowseFlag = u_browse_element->FirstChildElement("BrowseFlag")->GetText();
+    //<s:Body>
+    tinyxml2::XMLElement* s_Body = responseDocument.NewElement("s:Body");
+    s_Envelope->InsertEndChild(s_Body);
 
-    LogInfo(ObjectID + " " + BrowseFlag);
+    //<u:BrowseResponse>
+    tinyxml2::XMLElement * u_BrowseResponse = responseDocument.NewElement("u:BrowseResponse");
+    u_BrowseResponse->SetAttribute("xmlns:u","urn:schemas-upnp-org:service:ContentDirectory:1");
+    s_Body->InsertEndChild(u_BrowseResponse);
+
+    //<Result>
+    tinyxml2::XMLElement * Result = responseDocument.NewElement("Result");
+    u_BrowseResponse->InsertEndChild(Result);
+
+    //<NumberReturned>
+    tinyxml2::XMLElement * NumberReturned = responseDocument.NewElement("NumberReturned");
+    NumberReturned->SetText("0");
+    u_BrowseResponse->InsertEndChild(NumberReturned);
+
+
+    //<TotalMatches>
+    tinyxml2::XMLElement * TotalMatches = responseDocument.NewElement("TotalMatches");
+    TotalMatches->SetText("0");
+    u_BrowseResponse->InsertEndChild(TotalMatches);
+
+    //<UpdateID>
+    tinyxml2::XMLElement * UpdateID = responseDocument.NewElement("UpdateID");
+    UpdateID->SetText("0");
+
+    //print response
+    tinyxml2::XMLPrinter printer;
+    responseDocument.Print(&printer);
+    const char * responseString = printer.CStr();
+
+    //set http headers
+    response << "HTTP/1.1 200 OK\r\n";
+    response << "EXT: \r\n";
+    response << "Content-Length: " << strlen(responseString)<< "\r\n";
+    response << "Content-Type: text/xml \r\n";
+    response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
+    response << "\r\n";
+
+    response << responseString;
+    
 }
 
 Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& request) {
