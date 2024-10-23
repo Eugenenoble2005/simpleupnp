@@ -58,6 +58,7 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
 
     //<UpdateID>
     tinyxml2::XMLElement * UpdateID = responseDocument.NewElement("UpdateID");
+    u_BrowseResponse->InsertEndChild(UpdateID);
     UpdateID->SetText("0");
 
     //print response
@@ -72,9 +73,9 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     response << "Content-Type: text/xml \r\n";
     response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
     response << "\r\n";
-
-    response << responseString;
     
+    response << responseString;
+    LogInfo(response.str());
 }
 
 Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& request) {
