@@ -3,6 +3,8 @@
 #include <cstring>
 #include <tinyxml2.h>
 #include <sstream>
+#include <filesystem>
+#include "../helpers/global.h"
 //public facing control
 void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
     LogInfo("Received a content directory request");
@@ -22,6 +24,10 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     doc.Parse(request.c_str());
     tinyxml2::XMLElement* u_browse_element = doc.FirstChildElement("s:Envelope")->FirstChildElement("s:Body")->FirstChildElement("u:Browse");
     const std::string     ObjectID         = u_browse_element->FirstChildElement("ObjectID")->GetText();
+    if (ObjectID == "0") {
+        //read root directory
+        std::string root_directory = Global::GetContentDirectory();
+    }
     //Build xml response;
     //standard SOAP
     tinyxml2::XMLDocument responseDocument;
@@ -37,43 +43,42 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     s_Envelope->InsertEndChild(s_Body);
 
     //<u:BrowseResponse>
-    tinyxml2::XMLElement * u_BrowseResponse = responseDocument.NewElement("u:BrowseResponse");
-    u_BrowseResponse->SetAttribute("xmlns:u","urn:schemas-upnp-org:service:ContentDirectory:1");
+    tinyxml2::XMLElement* u_BrowseResponse = responseDocument.NewElement("u:BrowseResponse");
+    u_BrowseResponse->SetAttribute("xmlns:u", "urn:schemas-upnp-org:service:ContentDirectory:1");
     s_Body->InsertEndChild(u_BrowseResponse);
 
     //<Result>
-    tinyxml2::XMLElement * Result = responseDocument.NewElement("Result");
+    tinyxml2::XMLElement* Result = responseDocument.NewElement("Result");
     u_BrowseResponse->InsertEndChild(Result);
 
     //<NumberReturned>
-    tinyxml2::XMLElement * NumberReturned = responseDocument.NewElement("NumberReturned");
+    tinyxml2::XMLElement* NumberReturned = responseDocument.NewElement("NumberReturned");
     NumberReturned->SetText("0");
     u_BrowseResponse->InsertEndChild(NumberReturned);
 
-
     //<TotalMatches>
-    tinyxml2::XMLElement * TotalMatches = responseDocument.NewElement("TotalMatches");
+    tinyxml2::XMLElement* TotalMatches = responseDocument.NewElement("TotalMatches");
     TotalMatches->SetText("0");
     u_BrowseResponse->InsertEndChild(TotalMatches);
 
     //<UpdateID>
-    tinyxml2::XMLElement * UpdateID = responseDocument.NewElement("UpdateID");
+    tinyxml2::XMLElement* UpdateID = responseDocument.NewElement("UpdateID");
     u_BrowseResponse->InsertEndChild(UpdateID);
     UpdateID->SetText("0");
 
     //print response
     tinyxml2::XMLPrinter printer;
     responseDocument.Print(&printer);
-    const char * responseString = printer.CStr();
+    const char* responseString = printer.CStr();
 
     //set http headers
     response << "HTTP/1.1 200 OK\r\n";
     response << "EXT: \r\n";
-    response << "Content-Length: " << strlen(responseString)<< "\r\n";
+    response << "Content-Length: " << strlen(responseString) << "\r\n";
     response << "Content-Type: text/xml \r\n";
     response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
     response << "\r\n";
-    
+
     response << responseString;
     LogInfo(response.str());
 }
@@ -106,4 +111,10 @@ Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& 
     LogWarning("Invalid XML Payload. Discarding request..");
     //If it gets to this, someone fucked up.
     return ContentDirectoryAction::Invalid;
+}
+void Server::ContentDirectory::ReadPhysicalDirectory(std::string root) {
+    if (!std::filesystem::exists(root) || !std::filesystem::is_directory(root)) {
+        LogWarning("Directory does not exist or is not readable. Ignoring Request");
+        return;
+    }
 }

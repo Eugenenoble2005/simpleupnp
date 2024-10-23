@@ -2,12 +2,13 @@
 #define GLOBAL_H
 #include <mutex>
 #include <string>
-namespace Global{
-  extern std::string content_directory_root;
-  extern std::mutex content_directory_root_mutex;
+class Global {
+    private:
+        static std::string content_directory_root;
+        static std::mutex  content_directory_root_mutex;
+    public:
+    static void        SetContentDirectoryRoot(std::string value);
 
-  void SetContentDirectoryRoot(std::string value);
-
-  std::string GetContentDirectory();
-}
+    static std::string GetContentDirectory();
+};
 #endif

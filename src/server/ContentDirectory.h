@@ -15,6 +15,7 @@ namespace Server {
 
       private:
         static void Browse(std::string& request, std::stringstream& response);
+        static void ReadPhysicalDirectory(std::string root);
     };
 }
 
