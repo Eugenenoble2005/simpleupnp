@@ -17,7 +17,7 @@ void signal_handler(int signal){
 }
 int main() {
     Server::SSDPServer ssdp_server;
-    Global::SetContentDirectoryRoot("/home/noble/Videos");
+    Global::SetContentDirectoryRoot("/home/noble/Documents");
     ssdp_server.Hello();
     std::signal(SIGINT,signal_handler);
     while (keepRunning) {

@@ -4,7 +4,9 @@
 #include <tinyxml2.h>
 #include <sstream>
 #include <filesystem>
+#include <vector>
 #include "../helpers/global.h"
+#include "../helpers/escape_xml.h"
 //public facing control
 void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
     LogInfo("Received a content directory request");
@@ -22,12 +24,15 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     tinyxml2::XMLDocument doc;
     //no need to verify nodes anymore cause it's been done.
     doc.Parse(request.c_str());
-    tinyxml2::XMLElement* u_browse_element = doc.FirstChildElement("s:Envelope")->FirstChildElement("s:Body")->FirstChildElement("u:Browse");
-    const std::string     ObjectID         = u_browse_element->FirstChildElement("ObjectID")->GetText();
+    tinyxml2::XMLElement*              u_browse_element = doc.FirstChildElement("s:Envelope")->FirstChildElement("s:Body")->FirstChildElement("u:Browse");
+    const std::string                  ObjectID         = u_browse_element->FirstChildElement("ObjectID")->GetText();
+    std::vector<PhysicalDirectoryItem> pd_items;
     if (ObjectID == "0") {
         //read root directory
         std::string root_directory = Global::GetContentDirectory();
+        pd_items                   = ReadPhysicalDirectory(root_directory);
     }
+    
     //Build xml response;
     //standard SOAP
     tinyxml2::XMLDocument responseDocument;
@@ -49,16 +54,18 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
 
     //<Result>
     tinyxml2::XMLElement* Result = responseDocument.NewElement("Result");
+    //xml is escaped automatically
+    Result->SetText(BuildUBrowseXMLResponse(pd_items).c_str());
     u_BrowseResponse->InsertEndChild(Result);
 
     //<NumberReturned>
     tinyxml2::XMLElement* NumberReturned = responseDocument.NewElement("NumberReturned");
-    NumberReturned->SetText("0");
+    NumberReturned->SetText(pd_items.size());
     u_BrowseResponse->InsertEndChild(NumberReturned);
 
     //<TotalMatches>
     tinyxml2::XMLElement* TotalMatches = responseDocument.NewElement("TotalMatches");
-    TotalMatches->SetText("0");
+    TotalMatches->SetText(pd_items.size());
     u_BrowseResponse->InsertEndChild(TotalMatches);
 
     //<UpdateID>
@@ -79,8 +86,8 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
     response << "\r\n";
 
+    LogInfo(responseString);
     response << responseString;
-    LogInfo(response.str());
 }
 
 Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& request) {
@@ -112,9 +119,66 @@ Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& 
     //If it gets to this, someone fucked up.
     return ContentDirectoryAction::Invalid;
 }
-void Server::ContentDirectory::ReadPhysicalDirectory(std::string root) {
+std::vector<Server::PhysicalDirectoryItem> Server::ContentDirectory::ReadPhysicalDirectory(std::string root) {
+    std::vector<PhysicalDirectoryItem> Items;
     if (!std::filesystem::exists(root) || !std::filesystem::is_directory(root)) {
         LogWarning("Directory does not exist or is not readable. Ignoring Request");
-        return;
+        return Items;
     }
+    //get all folders and files in this directory
+    for (auto& item : std::filesystem::directory_iterator(root)) {
+        if (item.is_directory()) {
+            struct PhysicalDirectoryItem pd_item;
+            pd_item.itemName = item.path().filename();
+            Items.push_back(pd_item);
+        }
+    }
+    return Items;
+}
+
+std::string  Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<PhysicalDirectoryItem> & pd_items){
+    tinyxml2::XMLDocument responseDocument;
+    //<DIDI-Lite>
+    tinyxml2::XMLElement * DIDL_Lite = responseDocument.NewElement("DIDI-Lite");
+    responseDocument.InsertFirstChild(DIDL_Lite);
+    DIDL_Lite->SetAttribute("xmlns","urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/");
+    DIDL_Lite->SetAttribute("xmlns:ds","http://purl.org/dc/elements/1.1");
+    DIDL_Lite->SetAttribute("xmlns:upnp","urn:schemas-upnp-org:metadata-1-0/upnp/");
+    DIDL_Lite->SetAttribute("xmlns:dlna","urn:schemas-dlna-org:metadata-1-0/");
+
+
+    //currently working with only containers
+    for(auto & pd_item : pd_items){
+        //<container>
+        tinyxml2::XMLElement * container = responseDocument.NewElement("container");
+        container->SetAttribute("id","idontknowhowtogeneratethisyet");
+        container->SetAttribute("searchable","0");
+
+        //<dc:title>
+        tinyxml2::XMLElement * dc_title = responseDocument.NewElement("dc:title");
+        dc_title->SetText(pd_item.itemName.c_str());
+        container->InsertEndChild(dc_title);
+
+        //<dc:creator>
+        tinyxml2::XMLElement * dc_creator = responseDocument.NewElement("dc:creator");
+        dc_creator->SetText("Unknown");
+        container->InsertEndChild(dc_creator);
+
+        //<upnp:class>
+        tinyxml2::XMLElement * upnp_class = responseDocument.NewElement("upnp:class");
+        upnp_class->SetText("object.container");
+        container->InsertEndChild(upnp_class);
+
+
+        //push to <DIDI-Lite> for every item
+        DIDL_Lite->InsertEndChild(container);
+        
+    }
+    tinyxml2::XMLPrinter  printer;
+    responseDocument.Print(&printer);
+    std::string responseString = printer.CStr();
+
+    return responseString;
+    
+    
 }
