@@ -13,6 +13,8 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/content-directory-scpd.xml
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/connection-manager-scpd.xml
      DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/ms-media-registrar-scpd.xml
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_package(tinyxml2 REQUIRED)
 
 add_executable(

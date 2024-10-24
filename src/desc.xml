@@ -1,36 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<root configId="11467949" xmlns="urn:schemas-upnp-org:device-1-0" xmlns:dlna="urn:schemas-dlna-org:device-1-0">
-  <specVersion>
-    <major>1</major>
-    <minor>1</minor>
-  </specVersion>
-  <device>
-    <deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
-    <friendlyName>SimpleUPNP</friendlyName>
-    <manufacturer>XBMC Foundation</manufacturer>
-    <manufacturerURL>http://kodi.tv/</manufacturerURL>
-    <modelDescription>Kodi - Media Server</modelDescription>
-    <modelName>Kodi</modelName>
-    <modelNumber>21.1 (21.1.0) Git:20240908-nogitfound</modelNumber>
-    <modelURL>http://kodi.tv/</modelURL>
-    <UDN>uuid:2db225f8-14b3-4c97-b28e-b7e9bee15224</UDN>
-    <presentationURL>http://192.168.100.2:8080/</presentationURL>
-    <dlna:X_DLNADOC xmlns:dlna="urn:schemas-dlna-org:device-1-0">DMS-1.50</dlna:X_DLNADOC>
-        <serviceList>
-           <service>
-        <serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
-        <serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
-        <SCPDURL>/ContentDirectory/scpd.xml</SCPDURL>
-        <controlURL>/ContentDirectory/control.xml</controlURL>
-        <eventSubURL>/ContentDirectory/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/event.xml</eventSubURL>
-      </service>
-      <service>
-        <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
-        <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
-        <SCPDURL>/ConnectionManager/scpd.xml</SCPDURL>
-        <controlURL>/ConnectionManager/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/control.xml</controlURL>
-        <eventSubURL>/ConnectionManager/10792a5c-e057-07eb-7d8b-f5ef1d459e4a/event.xml</eventSubURL>
-      </service>
-    </serviceList>
-  </device>
+<root configId="11467949"
+	xmlns="urn:schemas-upnp-org:device-1-0"
+	xmlns:dlna="urn:schemas-dlna-org:device-1-0">
+	<specVersion>
+		<major>1</major>
+		<minor>1</minor>
+	</specVersion>
+	<device>
+		<deviceType>urn:schemas-upnp-org:device:MediaServer:1</deviceType>
+		<friendlyName>SimpleUPNP</friendlyName>
+		<manufacturer>Eugene Noble</manufacturer>
+		<manufacturerURL>https://www.github.com/eugenenoble2005</manufacturerURL>
+		<modelDescription>SimpleUPNP media Server</modelDescription>
+		<modelName>SimpleUPNP</modelName>
+		<modelNumber>1</modelNumber>
+		<modelURL>https://www.github.com/eugenenoble2005</modelURL>
+		<UDN>uuid:2db225f8-14b3-4c97-b28e-b7e9bee15224</UDN>
+		<dlna:X_DLNADOC
+			xmlns:dlna="urn:schemas-dlna-org:device-1-0">DMS-1.50
+		
+		</dlna:X_DLNADOC>
+		<serviceList>
+			<service>
+				<serviceType>urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1</serviceType>
+				<serviceId>urn:microsoft.com:serviceId:X_MS_MediaReceiverRegistrar</serviceId>
+				<SCPDURL>/X_MS_MediaReceiverRegistrar/scpd.xml</SCPDURL>
+				<controlURL>/X_MS_MediaReceiverRegistrar/control.xml</controlURL>
+				<eventSubURL>/X_MS_MediaReceiverRegistrar/event.xml</eventSubURL>
+			</service>
+			<service>
+				<serviceType>urn:schemas-upnp-org:service:ContentDirectory:1</serviceType>
+				<serviceId>urn:upnp-org:serviceId:ContentDirectory</serviceId>
+				<SCPDURL>/ContentDirectory/scpd.xml</SCPDURL>
+				<controlURL>/ContentDirectory/control.xml</controlURL>
+				<eventSubURL>/ContentDirectory/event.xml</eventSubURL>
+			</service>
+			<service>
+				<serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
+				<serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
+				<SCPDURL>/ConnectionManager/scpd.xml</SCPDURL>
+				<controlURL>/ConnectionManager/control.xml</controlURL>
+				<eventSubURL>/ConnectionManager/event.xml</eventSubURL>
+			</service>
+		</serviceList>
+	</device>
 </root>

@@ -77,7 +77,13 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         DeliverStaticFile("content-directory-scpd.xml", response);
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("connection-manager-scpd.xml", response);
-    } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
+    }
+    else if(http_request.uri == "/X_MS_MediaReceiverRegistrar/scpd.xml" && http_request.method == "GET"){
+        DeliverStaticFile("ms-media-registrar-scpd.xml",response );
+    } 
+    else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
+        LogInfo("Content was: " + http_request.content);
+        LogInfo("While raw buffer was: " + std::string(buffer));
         Server::ContentDirectory::Control(http_request.content, response);
     }
 

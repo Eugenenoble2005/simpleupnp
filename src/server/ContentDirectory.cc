@@ -92,7 +92,6 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
 
 Server::ContentDirectoryAction Server::ContentDirectory::GetAction(std::string& request) {
     tinyxml2::XMLDocument doc;
-
     if (doc.Parse(request.c_str()) != tinyxml2::XML_SUCCESS) {
         LogWarning("Invalid XML Payload. Discarding request..");
         return ContentDirectoryAction::Invalid;
@@ -153,8 +152,10 @@ std::string  Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physi
     for(auto & pd_item : pd_items){
         //<container>
         tinyxml2::XMLElement * container = responseDocument.NewElement("container");
-        container->SetAttribute("id",generate_uuid().c_str());
+        container->SetAttribute("id",pd_item.fullSystemPath.c_str() );
         container->SetAttribute("searchable","0");
+        container->SetAttribute("restricted","1");
+        container->SetAttribute("parentID","0");
 
         //<dc:title>
         tinyxml2::XMLElement * dc_title = responseDocument.NewElement("dc:title");

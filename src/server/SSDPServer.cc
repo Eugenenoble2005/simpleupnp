@@ -60,7 +60,7 @@ void Server::SSDPServer::InitUdpSocket() {
 INFORM OTHER DEVICES WE ARE JOINING THE NETWORK
 **/
 void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, struct sockaddr_in* sock_other) {
-    const u_int device_count = 8;
+    const u_int device_count = 9;
     if (upnp_device == nullptr) {
         LogError("Could not init UPNP Device. Aborting...");
         exit(0);
@@ -95,13 +95,13 @@ void Server::SSDPServer::Advertise(std::string NTS, bool advertiseForSearch, str
     struct Server::NTUSNValuePair service_two;
     service_one.NT  = "urn-schemas-upnp-org:service:ContentDirectory:1";
     service_two.USN = "uuid:" + upnp_device->GUID + "::urn-schemas-upnp-org:service:ContentDirectory:1";
-
-   // struct Server::NTUSNValuePair service_three;
-    //service_three.NT  = "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1";
-    //service_three.USN = "uuid" + upnp_device->GUID + "::urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1";
+    
+     struct Server::NTUSNValuePair service_three;
+    service_three.NT  = "urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1";
+    service_three.USN = "uuid" + upnp_device->GUID + "::urn:microsoft.com:service:X_MS_MediaReceiverRegistrar:1";
 
     const struct Server::NTUSNValuePair devices[device_count] = {root_device_one,     root_device_two, root_device_three, embedded_device_one,
-                                                                 embedded_device_two, service_one,     service_two};
+                                                                 embedded_device_two, service_one,     service_two,service_three};
 
     for (int i = 0; i < device_count; ++i) {
         const struct NTUSNValuePair device = devices[i];
@@ -187,7 +187,7 @@ void Server::SSDPServer::ListenOnUdpSocket() {
             //si_other pointer is passed becuase we must unicast the reponse of the search
             Advertise("any", true, &si_other);
             //specs say not to do this but it's the only way i could get some renderers to work like BubbleUPNP
-            // Hello();
+            Hello();
             LogInfo("RESPONDING TO SSDP M-SEARCH");
         } else {
             // std::cout << buffer_str << std::endl;
