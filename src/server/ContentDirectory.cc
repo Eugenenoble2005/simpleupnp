@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <vector>
 #include "../helpers/global.h"
+#include "../helpers/uuid_generator.h"
 #include "../helpers/escape_xml.h"
 //public facing control
 void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
@@ -86,7 +87,6 @@ void Server::ContentDirectory::Browse(std::string& request, std::stringstream& r
     response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
     response << "\r\n";
 
-    LogInfo(responseString);
     response << responseString;
 }
 
@@ -130,6 +130,8 @@ std::vector<Server::PhysicalDirectoryItem> Server::ContentDirectory::ReadPhysica
         if (item.is_directory()) {
             struct PhysicalDirectoryItem pd_item;
             pd_item.itemName = item.path().filename();
+            pd_item.fullSystemPath = item.path();
+            LogInfo(pd_item.fullSystemPath);
             Items.push_back(pd_item);
         }
     }
@@ -138,20 +140,20 @@ std::vector<Server::PhysicalDirectoryItem> Server::ContentDirectory::ReadPhysica
 
 std::string  Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<PhysicalDirectoryItem> & pd_items){
     tinyxml2::XMLDocument responseDocument;
-    //<DIDI-Lite>
-    tinyxml2::XMLElement * DIDL_Lite = responseDocument.NewElement("DIDI-Lite");
+    //<DIDL-Lite>
+    tinyxml2::XMLElement * DIDL_Lite = responseDocument.NewElement("DIDL-Lite");
     responseDocument.InsertFirstChild(DIDL_Lite);
     DIDL_Lite->SetAttribute("xmlns","urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/");
-    DIDL_Lite->SetAttribute("xmlns:ds","http://purl.org/dc/elements/1.1");
+    DIDL_Lite->SetAttribute("xmlns:dc","http://purl.org/dc/elements/1.1");
     DIDL_Lite->SetAttribute("xmlns:upnp","urn:schemas-upnp-org:metadata-1-0/upnp/");
     DIDL_Lite->SetAttribute("xmlns:dlna","urn:schemas-dlna-org:metadata-1-0/");
 
 
-    //currently working with only containers
+    //currently working with only containers until i figure out exactly what i'm doing.
     for(auto & pd_item : pd_items){
         //<container>
         tinyxml2::XMLElement * container = responseDocument.NewElement("container");
-        container->SetAttribute("id","idontknowhowtogeneratethisyet");
+        container->SetAttribute("id",generate_uuid().c_str());
         container->SetAttribute("searchable","0");
 
         //<dc:title>
@@ -170,7 +172,7 @@ std::string  Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physi
         container->InsertEndChild(upnp_class);
 
 
-        //push to <DIDI-Lite> for every item
+        //push to <DIDL-Lite> for every item
         DIDL_Lite->InsertEndChild(container);
         
     }
