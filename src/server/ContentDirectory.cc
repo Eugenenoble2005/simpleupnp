@@ -164,6 +164,12 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
         }
         else{
             itemOrContainer = responseDocument.NewElement("item");
+
+            //dummy res till i figure out how to do it properly
+            tinyxml2::XMLElement * res = responseDocument.NewElement("res");
+            res->SetAttribute("protocolInfo","http-get:*:video/mkv:*");
+            res->SetText("http://server/path/to/video");
+            itemOrContainer->InsertEndChild(res);
         }
         itemOrContainer->SetAttribute("id", pd_item.fullSystemPath.c_str());
         itemOrContainer->SetAttribute("restricted", "1");

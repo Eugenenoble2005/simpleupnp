@@ -49,22 +49,34 @@ void Server::HTTPServer::StartListen() {
     while (true) {
         AcceptConnection(m_new_socket);
         std::string http_request;
-        char buffer[BUFFER_SIZE] = {0};
-        int  bytes_recieved;
+        char        buffer[BUFFER_SIZE] = {0};
+        int         bytes_recieved;
         //bytes_recieved           = read(m_new_socket, buffer, BUFFER_SIZE);
-
         while ((bytes_recieved = read(m_new_socket, buffer, BUFFER_SIZE)) > 0) {
             http_request.append(buffer, bytes_recieved);
-
-            // Check for the end of the headers (indicated by "\r\n\r\n")
             if (http_request.find("\r\n\r\n") != std::string::npos) {
-                break; // We've received the full headers
+                break; 
             }
         }
         if (bytes_recieved < 0) {
             LogError("Failed to read bytes from connection");
         }
-         HandleHttpRequest(http_request.c_str());
+        /*Keep reading buffers until we match the content length*/
+        size_t content_length_pos = http_request.find("Content-Length:");
+        size_t body_start         = http_request.find("\r\n\r\n") + 4;
+        int    content_length     = 0;
+
+        if (content_length_pos != std::string::npos) {
+            content_length = std::stoi(http_request.substr(content_length_pos + 15));
+            http_request.reserve(body_start + content_length);
+            while (http_request.size() < body_start + content_length) {
+                bytes_recieved = read(m_new_socket, buffer, BUFFER_SIZE);
+                if (bytes_recieved <= 0)
+                    break;
+                http_request.append(buffer, bytes_recieved);
+            }
+        }
+        HandleHttpRequest(http_request.c_str());
         close(m_new_socket);
     }
 }
@@ -126,7 +138,7 @@ struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(const char* buff
             http_request.content += line + "\n";
         }
         //check if headers have ended by finding the first empty line. Only do this for the first line incase there are other blank lines elsewhere.
-        if (line == "\r" && checkSubsequentLinesForBody == false) {
+        if (line == "\r" || line == "\r\n" && checkSubsequentLinesForBody == false) {
             //next line will contain the body
             checkSubsequentLinesForBody = true;
         }

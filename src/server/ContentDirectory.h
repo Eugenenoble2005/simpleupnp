@@ -7,10 +7,16 @@ namespace Server {
         Browse,
         Invalid
     };
+    enum MediaType{
+      Video,
+      Image,
+      Music
+    };
     struct PhysicalDirectoryItem{
       std::string itemName;
       std::string fullSystemPath;
       bool isContainer;
+      MediaType mediaType;
     };
     class ContentDirectory {
       public:
