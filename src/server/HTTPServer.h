@@ -30,8 +30,8 @@ namespace Server {
         std::string        m_serverMessage;
         void               StartServer();
         void               AcceptConnection(int& new_socket);
-        void               HandleHttpRequest(char* buffer);
-        struct HttpRequest ParseHttpRequest(char* buffer);
+        void               HandleHttpRequest(const char* buffer);
+        struct HttpRequest ParseHttpRequest(const char* buffer);
         void               DeliverStaticFile(std::string file_name, std::stringstream &response);
         std::string        ContentDirectoryXMLResponse(std::string payload);
     };

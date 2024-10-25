@@ -10,6 +10,7 @@ namespace Server {
     struct PhysicalDirectoryItem{
       std::string itemName;
       std::string fullSystemPath;
+      bool isContainer;
     };
     class ContentDirectory {
       public:

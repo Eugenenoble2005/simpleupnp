@@ -46,15 +46,25 @@ void Server::HTTPServer::StartListen() {
         LogError("Failed to listen on UDP Server. Aborting...");
         exit(0);
     }
-    int bytes_recieved;
     while (true) {
         AcceptConnection(m_new_socket);
+        std::string http_request;
         char buffer[BUFFER_SIZE] = {0};
-        bytes_recieved           = read(m_new_socket, buffer, BUFFER_SIZE);
+        int  bytes_recieved;
+        //bytes_recieved           = read(m_new_socket, buffer, BUFFER_SIZE);
+
+        while ((bytes_recieved = read(m_new_socket, buffer, BUFFER_SIZE)) > 0) {
+            http_request.append(buffer, bytes_recieved);
+
+            // Check for the end of the headers (indicated by "\r\n\r\n")
+            if (http_request.find("\r\n\r\n") != std::string::npos) {
+                break; // We've received the full headers
+            }
+        }
         if (bytes_recieved < 0) {
             LogError("Failed to read bytes from connection");
         }
-        HandleHttpRequest(buffer);
+         HandleHttpRequest(http_request.c_str());
         close(m_new_socket);
     }
 }
@@ -66,8 +76,7 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
     }
 }
 
-void Server::HTTPServer::HandleHttpRequest(char* buffer) {
-    //std::cout << buffer << std::endl;
+void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
     HttpRequest http_request = ParseHttpRequest(buffer);
     LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
     std::stringstream response;
@@ -77,13 +86,9 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
         DeliverStaticFile("content-directory-scpd.xml", response);
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("connection-manager-scpd.xml", response);
-    }
-    else if(http_request.uri == "/X_MS_MediaReceiverRegistrar/scpd.xml" && http_request.method == "GET"){
-        DeliverStaticFile("ms-media-registrar-scpd.xml",response );
-    } 
-    else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
-        LogInfo("Content was: " + http_request.content);
-        LogInfo("While raw buffer was: " + std::string(buffer));
+    } else if (http_request.uri == "/X_MS_MediaReceiverRegistrar/scpd.xml" && http_request.method == "GET") {
+        DeliverStaticFile("ms-media-registrar-scpd.xml", response);
+    } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
         Server::ContentDirectory::Control(http_request.content, response);
     }
 
@@ -92,7 +97,7 @@ void Server::HTTPServer::HandleHttpRequest(char* buffer) {
     response.clear();
 }
 
-struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(char* buffer) {
+struct Server::HttpRequest Server::HTTPServer::ParseHttpRequest(const char* buffer) {
     std::string        buffer_str(buffer);
     std::stringstream  buffer_stream(buffer_str);
     std::string        line;
