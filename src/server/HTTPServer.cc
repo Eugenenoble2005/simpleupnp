@@ -17,6 +17,7 @@
 #include <utility>
 #include "../helpers/logger.h"
 #include "ContentDirectory.h"
+#include "../helpers/encode_file_path.h"
 void Server::HTTPServer::StartServer() {
     m_socket = socket(AF_INET, SOCK_STREAM, 0);
     setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(&opt));
@@ -91,7 +92,7 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 
 void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
     HttpRequest http_request = ParseHttpRequest(buffer);
-    std::cout << "BUFFER WAS: " << buffer << std::endl;
+    // std::cout << "BUFFER WAS: " << buffer << std::endl;
     LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
     std::stringstream response;
     if (http_request.uri == "/desc.xml" && http_request.method == "GET") {
@@ -104,6 +105,17 @@ void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
         DeliverStaticFile("ms-media-registrar-scpd.xml", response);
     } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
         Server::ContentDirectory::Control(http_request.content, response);
+    }
+    ////Media resource request
+    else if(http_request.uri.find("/importResource") != std::string::npos && http_request.method == "GET"){
+        //get last url segment
+        std::string requestedResource;
+        std::stringstream importResourceStream(http_request.uri);
+        std::string line;
+        while(std::getline(importResourceStream,line,'/')){
+            requestedResource = line;
+        } 
+       Server::ContentDirectory::Control(requestedResource,response,ContentDirectoryAction::ImportResource );
     }
 
     const std::string full_response = response.str();

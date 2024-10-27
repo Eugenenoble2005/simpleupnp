@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
+#include <memory>
+#include <optional>
 #include <tinyxml2.h>
 #include <sstream>
 #include <filesystem>
@@ -13,15 +15,20 @@
 #include "../helpers/ipv4_address.h"
 #include "../helpers/encode_file_path.h"
 //public facing control
-void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
-    LogInfo("Received a content directory request");
+void Server::ContentDirectory::Control(std::string& request, std::stringstream& response, std::optional<ContentDirectoryAction> action) {
     //process request
-
-    ContentDirectoryAction content_directory_action = GetAction(request);
+    ContentDirectoryAction content_directory_action;
+    //if action has not been supplied
+    if (!action) {
+        content_directory_action = GetAction(request); 
+    } else {
+        content_directory_action = action.value();
+    }
     switch (content_directory_action) {
         case Server::ContentDirectoryAction::Browse: Browse(request, response); break;
+        case Server::ContentDirectoryAction::ImportResource : ImportResource(request,response ); break;
         default: return;
-    }
+    }   
     return;
 }
 
@@ -211,4 +218,9 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
     std::string responseString = printer.CStr();
 
     return responseString;
+}
+
+void Server::ContentDirectory::ImportResource(std::string & request, std::stringstream & response){
+    std::string requestedResource = DecodeFilePath(request);
+    std::cout << "Attempting to serve a media file :" + requestedResource + " From the content directory import resource action " << std::endl;
 }
