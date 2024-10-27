@@ -1,5 +1,6 @@
 #ifndef CONTENT_DIRECTORY_H
 #define CONTENT_DIRECTORY_H
+#include <cstddef>
 #include <string>
 #include <vector>
 namespace Server {
@@ -16,7 +17,10 @@ namespace Server {
       std::string itemName;
       std::string fullSystemPath;
       bool isContainer;
+
+      //only important if the instance is not a container
       MediaType mediaType;
+      std::string fileExtension;
     };
     class ContentDirectory {
       public:

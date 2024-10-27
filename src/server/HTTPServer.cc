@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <netinet/in.h>
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <stdlib.h>
@@ -90,6 +91,7 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 
 void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
     HttpRequest http_request = ParseHttpRequest(buffer);
+    std::cout << "BUFFER WAS: " << buffer << std::endl;
     LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
     std::stringstream response;
     if (http_request.uri == "/desc.xml" && http_request.method == "GET") {

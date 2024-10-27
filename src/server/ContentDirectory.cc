@@ -10,6 +10,8 @@
 #include "../helpers/global.h"
 #include "../helpers/uuid_generator.h"
 #include "../helpers/escape_xml.h"
+#include "../helpers/ipv4_address.h"
+#include "../helpers/encode_file_path.h"
 //public facing control
 void Server::ContentDirectory::Control(std::string& request, std::stringstream& response) {
     LogInfo("Received a content directory request");
@@ -138,6 +140,8 @@ std::vector<Server::PhysicalDirectoryItem> Server::ContentDirectory::ReadPhysica
             pd_item.itemName       = item.path().filename();
             pd_item.fullSystemPath = item.path();
             pd_item.isContainer    = false;
+            pd_item.fileExtension  = item.path().extension();
+            pd_item.mediaType      = MediaType::Video;
             Items.push_back(pd_item);
         }
     }
@@ -158,17 +162,29 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
     for (auto& pd_item : pd_items) {
         //<container>
         tinyxml2::XMLElement* itemOrContainer;
+        //<upnp:class>
+        tinyxml2::XMLElement* upnp_class = responseDocument.NewElement("upnp:class");
         if (pd_item.isContainer) {
             itemOrContainer = responseDocument.NewElement("container");
             itemOrContainer->SetAttribute("searchable", "0");
-        }
-        else{
-            itemOrContainer = responseDocument.NewElement("item");
 
+            upnp_class->SetText("object.container");
+        } else {
+
+            itemOrContainer = responseDocument.NewElement("item");
             //dummy res till i figure out how to do it properly
-            tinyxml2::XMLElement * res = responseDocument.NewElement("res");
-            res->SetAttribute("protocolInfo","http-get:*:video/mkv:*");
-            res->SetText("http://server/path/to/video");
+            tinyxml2::XMLElement* res = responseDocument.NewElement("res");
+            switch (pd_item.mediaType) {
+                case Server::MediaType::Video:
+                    upnp_class->SetText("object.item.videoItem");
+                    res->SetAttribute("protocolInfo", "http-get:*:video/mkv:*");
+                    break;
+                case Server::MediaType::Image: upnp_class->SetText("object.item.imageItem"); break;
+                case Server::MediaType::Music: upnp_class->SetText("object.item.audioItem");
+            }
+            //insert res element if the item is not a container
+            std::string importUrl = "http://" + GetIpV4Address() + ":2005" + "/importResource/" + EncodeFilePath(pd_item.fullSystemPath);
+            res->SetText(importUrl.c_str());
             itemOrContainer->InsertEndChild(res);
         }
         itemOrContainer->SetAttribute("id", pd_item.fullSystemPath.c_str());
@@ -186,10 +202,7 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
         itemOrContainer->InsertEndChild(dc_creator);
 
         //<upnp:class>
-        tinyxml2::XMLElement* upnp_class = responseDocument.NewElement("upnp:class");
-        upnp_class->SetText(pd_item.isContainer ? "object.container" : "object.item.videoItem");
         itemOrContainer->InsertEndChild(upnp_class);
-
         //push to <DIDL-Lite> for every item
         DIDL_Lite->InsertEndChild(itemOrContainer);
     }

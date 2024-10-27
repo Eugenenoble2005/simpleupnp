@@ -28,5 +28,6 @@ add_executable(
   src/helpers/ipv4_address.cc
   src/helpers/global.cc
   src/helpers/escape_xml.cc
+  src/helpers/encode_file_path.cc
   src/server/ContentDirectory.cc)
 target_link_libraries(simpleupnp tinyxml2)
