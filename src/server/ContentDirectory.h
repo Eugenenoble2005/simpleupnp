@@ -26,13 +26,14 @@ namespace Server {
     };
     class ContentDirectory {
       public:
-        static void                   Control(std::string& request, std::stringstream& response, std::optional<ContentDirectoryAction> action = std::nullopt);
+        static void                   Control(std::string& request, std::stringstream& response, std::optional<ContentDirectoryAction> action = std::nullopt,
+                                              std::optional<int> response_socket = std::nullopt);
 
         static ContentDirectoryAction GetAction(std::string& request);
 
       private:
         static void                               Browse(std::string& request, std::stringstream& response);
-        static void                               ImportResource(std::string& request, std::stringstream& response);
+        static void                               ImportResource(std::string requestedResource, int response_socket);
         static std::vector<PhysicalDirectoryItem> ReadPhysicalDirectory(std::string root);
         static std::string                        BuildUBrowseXMLResponse(std::vector<PhysicalDirectoryItem>& pd_items);
     };

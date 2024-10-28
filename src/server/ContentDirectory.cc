@@ -2,33 +2,42 @@
 #include "../helpers/logger.h"
 #include <algorithm>
 #include <cstring>
+#include <fstream>
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <thread>
 #include <tinyxml2.h>
 #include <sstream>
 #include <filesystem>
+#include <unistd.h>
 #include <vector>
 #include "../helpers/global.h"
 #include "../helpers/uuid_generator.h"
 #include "../helpers/escape_xml.h"
 #include "../helpers/ipv4_address.h"
 #include "../helpers/encode_file_path.h"
+#include "HTTPServer.h"
 //public facing control
-void Server::ContentDirectory::Control(std::string& request, std::stringstream& response, std::optional<ContentDirectoryAction> action) {
+void Server::ContentDirectory::Control(std::string& request, std::stringstream& response, std::optional<ContentDirectoryAction> action, std::optional<int> response_socket) {
     //process request
     ContentDirectoryAction content_directory_action;
     //if action has not been supplied
     if (!action) {
-        content_directory_action = GetAction(request); 
+        content_directory_action = GetAction(request);
     } else {
         content_directory_action = action.value();
     }
     switch (content_directory_action) {
         case Server::ContentDirectoryAction::Browse: Browse(request, response); break;
-        case Server::ContentDirectoryAction::ImportResource : ImportResource(request,response ); break;
+        case Server::ContentDirectoryAction::ImportResource: {
+            std::thread import_resource_thread(&Server::ContentDirectory::ImportResource, request, response_socket.value());
+            import_resource_thread.detach();
+        }
+        //ImportResource(request, response_socket.value());
+        break;
         default: return;
-    }   
+    }
     return;
 }
 
@@ -220,7 +229,47 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
     return responseString;
 }
 
-void Server::ContentDirectory::ImportResource(std::string & request, std::stringstream & response){
-    std::string requestedResource = DecodeFilePath(request);
-    std::cout << "Attempting to serve a media file :" + requestedResource + " From the content directory import resource action " << std::endl;
+void Server::ContentDirectory::ImportResource(std::string requestedResource, int response_socket) {
+    return;
+    requestedResource = DecodeFilePath(requestedResource);
+    std::cout << "requested resource was " << requestedResource << "and port was" << std::to_string(response_socket) << std::endl;
+    std::ifstream file(requestedResource, std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        LogError("Failed to open file: " + requestedResource);
+        return;
+    }
+
+    // Get the file size
+    std::streamsize file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // Create HTTP headers
+    std::stringstream response_headers;
+    response_headers << "HTTP/1.1 200 OK\r\n";
+    response_headers << "Content-Type: video/x-matroska\r\n"; // Adjust MIME type if necessary
+    response_headers << "Content-Length: " << file_size << "\r\n";
+    response_headers << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
+    response_headers << "TransferMode.DLNA.ORG: Steaming \r\n";
+    response_headers << "Connection: close\r\n\r\n";
+
+    // Send headers
+    std::string headers       = response_headers.str();
+    ssize_t     bytes_written = write(response_socket, headers.c_str(), headers.size());
+
+    // Stream the file in chunks
+    const int BUFFER_SIZE = 8192;
+    char      buffer[BUFFER_SIZE];
+    while (file) {
+        file.read(buffer, BUFFER_SIZE);
+        std::streamsize bytes_read = file.gcount();
+        if (bytes_read > 0) {
+            bytes_written = write(response_socket, buffer, bytes_read);
+            if (bytes_written < 0) {
+                LogError("Failed to write to socket during streaming");
+                break;
+            }
+        }
+    }
+    file.close();
+    close(response_socket);
 }

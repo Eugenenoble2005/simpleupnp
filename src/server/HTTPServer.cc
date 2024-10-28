@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <linux/close_range.h>
 #include <netinet/in.h>
 #include <ostream>
 #include <sstream>
@@ -57,7 +58,7 @@ void Server::HTTPServer::StartListen() {
         while ((bytes_recieved = read(m_new_socket, buffer, BUFFER_SIZE)) > 0) {
             http_request.append(buffer, bytes_recieved);
             if (http_request.find("\r\n\r\n") != std::string::npos) {
-                break; 
+                break;
             }
         }
         if (bytes_recieved < 0) {
@@ -79,7 +80,7 @@ void Server::HTTPServer::StartListen() {
             }
         }
         HandleHttpRequest(http_request.c_str());
-        close(m_new_socket);
+        // close(m_new_socket);
     }
 }
 void Server::HTTPServer::AcceptConnection(int& new_socket) {
@@ -97,29 +98,44 @@ void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
     std::stringstream response;
     if (http_request.uri == "/desc.xml" && http_request.method == "GET") {
         DeliverStaticFile("desc.xml", response);
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
     } else if (http_request.uri == "/ContentDirectory/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("content-directory-scpd.xml", response);
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("connection-manager-scpd.xml", response);
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
     } else if (http_request.uri == "/X_MS_MediaReceiverRegistrar/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("ms-media-registrar-scpd.xml", response);
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
     } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
         Server::ContentDirectory::Control(http_request.content, response);
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
     }
     ////Media resource request
-    else if(http_request.uri.find("/importResource") != std::string::npos && http_request.method == "GET"){
+    else if (http_request.uri.find("/importResource") != std::string::npos && http_request.method == "GET") {
         //get last url segment
-        std::string requestedResource;
+        std::string       requestedResource;
         std::stringstream importResourceStream(http_request.uri);
-        std::string line;
-        while(std::getline(importResourceStream,line,'/')){
+        std::string       line;
+        while (std::getline(importResourceStream, line, '/')) {
             requestedResource = line;
-        } 
-       Server::ContentDirectory::Control(requestedResource,response,ContentDirectoryAction::ImportResource );
+        }
+        Server::ContentDirectory::Control(requestedResource, response, ContentDirectoryAction::ImportResource, m_new_socket);
+
+        return;
     }
 
-    const std::string full_response = response.str();
-    write(m_new_socket, full_response.c_str(), full_response.size());
     response.clear();
 }
 
