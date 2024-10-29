@@ -41,7 +41,9 @@ Server::HTTPServer::HTTPServer() {
     m_socketAddress_len             = sizeof(m_socketAddress);
     StartServer();
 }
-Server::HTTPServer::~HTTPServer() {}
+Server::HTTPServer::~HTTPServer() {
+    LogInfo("Destucing http server");
+}
 
 void Server::HTTPServer::StartListen() {
     const int BUFFER_SIZE = 30270;
@@ -128,9 +130,19 @@ void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
         std::string       requestedResource;
         std::stringstream importResourceStream(http_request.uri);
         std::string       line;
+        //get last url segment
         while (std::getline(importResourceStream, line, '/')) {
             requestedResource = line;
         }
+        
+        line.clear();
+        //ignore thumbnail requests cause i aint finna deal with that now
+        if(requestedResource.find("?") != std::string::npos){
+            std::cout <<"A thumbain request?" << std::endl;
+            return;
+            requestedResource = requestedResource.substr(0, requestedResource.find("?"));
+        }
+        std::cout << requestedResource << std::endl;
         Server::ContentDirectory::Control(requestedResource, response, ContentDirectoryAction::ImportResource, m_new_socket);
 
         return;
@@ -194,6 +206,7 @@ void Server::HTTPServer::DeliverStaticFile(std::string file_name, std::stringstr
     response << reply_buffer;
 }
 void Server::HTTPServer::CloseServer() {
+    LogInfo("Closing server Sockets");
     close(m_new_socket);
     close(m_socket);
 }

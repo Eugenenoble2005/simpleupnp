@@ -16,6 +16,7 @@ void signal_handler(int signal){
     }
 }
 int main() {
+    //std::signal(SIGPIPE,SIG_IGN);
     Server::SSDPServer ssdp_server;
     Global::SetContentDirectoryRoot("/mnt");
     ssdp_server.Hello();

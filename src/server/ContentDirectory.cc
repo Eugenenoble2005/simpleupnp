@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <sys/socket.h>
 #include <thread>
 #include <tinyxml2.h>
 #include <sstream>
@@ -230,7 +231,6 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
 }
 
 void Server::ContentDirectory::ImportResource(std::string requestedResource, int response_socket) {
-    return;
     requestedResource = DecodeFilePath(requestedResource);
     std::cout << "requested resource was " << requestedResource << "and port was" << std::to_string(response_socket) << std::endl;
     std::ifstream file(requestedResource, std::ios::binary | std::ios::ate);
@@ -238,20 +238,17 @@ void Server::ContentDirectory::ImportResource(std::string requestedResource, int
         LogError("Failed to open file: " + requestedResource);
         return;
     }
-
     // Get the file size
     std::streamsize file_size = file.tellg();
     file.seekg(0, std::ios::beg);
-
     // Create HTTP headers
     std::stringstream response_headers;
     response_headers << "HTTP/1.1 200 OK\r\n";
     response_headers << "Content-Type: video/x-matroska\r\n"; // Adjust MIME type if necessary
     response_headers << "Content-Length: " << file_size << "\r\n";
     response_headers << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
-    response_headers << "TransferMode.DLNA.ORG: Steaming \r\n";
+    response_headers << "TransferMode.DLNA.ORG: Streaming \r\n";
     response_headers << "Connection: close\r\n\r\n";
-
     // Send headers
     std::string headers       = response_headers.str();
     ssize_t     bytes_written = write(response_socket, headers.c_str(), headers.size());
@@ -259,17 +256,22 @@ void Server::ContentDirectory::ImportResource(std::string requestedResource, int
     // Stream the file in chunks
     const int BUFFER_SIZE = 8192;
     char      buffer[BUFFER_SIZE];
-    while (file) {
-        file.read(buffer, BUFFER_SIZE);
-        std::streamsize bytes_read = file.gcount();
-        if (bytes_read > 0) {
-            bytes_written = write(response_socket, buffer, bytes_read);
-            if (bytes_written < 0) {
-                LogError("Failed to write to socket during streaming");
-                break;
+
+    // file.read(buffer, BUFFER_SIZE);
+    // std::streamsize bytes_read = file.gcount();
+    // bytes_written              = write(response_socket, buffer, bytes_read);
+    try {
+        while (file) {
+            file.read(buffer, BUFFER_SIZE);
+            std::streamsize bytes_read = file.gcount();
+            if (bytes_read > 0) {
+                bytes_written = send(response_socket, buffer, bytes_read, MSG_NOSIGNAL);
+                if (bytes_written < 0) {
+                    LogWarning("Failed to write to socket during streaming. Socket might have been closed by peer.");
+                    break;
+                }
             }
         }
-    }
+    } catch (...) {}
     file.close();
-    close(response_socket);
 }

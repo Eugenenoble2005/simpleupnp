@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(simpleupnp)
 
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g")
+
 include_directories(src/server src/helpers)
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/src/desc.xml

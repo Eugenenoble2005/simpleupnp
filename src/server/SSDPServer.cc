@@ -202,6 +202,8 @@ void Server::SSDPServer::Hello() {
     LogInfo("SSDP:ALIVE BROADCASTED");
 }
 
-Server::SSDPServer::~SSDPServer() {}
+Server::SSDPServer::~SSDPServer() {
+    LogInfo("Destructing ssdp");
+}
 
 // UPNP DEVICE STRUCT

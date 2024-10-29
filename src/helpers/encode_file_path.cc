@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <string>
 #include "encode_file_path.h"
-
+#include <iostream>
 std::string EncodeFilePath(std::string& file_path) {
     std::ostringstream escaped;
     escaped.fill('0');
@@ -21,7 +21,6 @@ std::string EncodeFilePath(std::string& file_path) {
 }
 
 std::string DecodeFilePath(std::string& encoded_file_path) {
-
     std::ostringstream unescaped;
     size_t             i = 0;
     while (i < encoded_file_path.length()) {
