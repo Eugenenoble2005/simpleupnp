@@ -6,6 +6,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <string>
 #include <sys/socket.h>
 #include <thread>
 #include <tinyxml2.h>
@@ -171,10 +172,10 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
     tinyxml2::XMLElement* DIDL_Lite = responseDocument.NewElement("DIDL-Lite");
     responseDocument.InsertFirstChild(DIDL_Lite);
     DIDL_Lite->SetAttribute("xmlns", "urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/");
-    DIDL_Lite->SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1");
+    DIDL_Lite->SetAttribute("xmlns:dc", "http://purl.org/dc/elements/1.1/");
     DIDL_Lite->SetAttribute("xmlns:upnp", "urn:schemas-upnp-org:metadata-1-0/upnp/");
-    DIDL_Lite->SetAttribute("xmlns:dlna", "urn:schemas-dlna-org:metadata-1-0/");
-
+    // DIDL_Lite->SetAttribute("xmlns:dlna", "urn:schemas-dlna-org:metadata-1-0/");
+    DIDL_Lite->SetAttribute("xmlns:sec", "http://www.sec.co.kr/");
     //currently working with only containers until i figure out exactly what i'm doing.
     for (auto& pd_item : pd_items) {
         //<container>
@@ -183,7 +184,6 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
         tinyxml2::XMLElement* upnp_class = responseDocument.NewElement("upnp:class");
         if (pd_item.isContainer) {
             itemOrContainer = responseDocument.NewElement("container");
-            itemOrContainer->SetAttribute("searchable", "0");
 
             upnp_class->SetText("object.container");
         } else {
@@ -205,8 +205,9 @@ std::string Server::ContentDirectory::BuildUBrowseXMLResponse(std::vector<Physic
             itemOrContainer->InsertEndChild(res);
         }
         itemOrContainer->SetAttribute("id", pd_item.fullSystemPath.c_str());
-        itemOrContainer->SetAttribute("restricted", "1");
         itemOrContainer->SetAttribute("parentID", "0");
+        itemOrContainer->SetAttribute("restricted", "1");
+        itemOrContainer->SetAttribute("searchable", "0");
 
         //<dc:title>
         tinyxml2::XMLElement* dc_title = responseDocument.NewElement("dc:title");
@@ -243,23 +244,21 @@ void Server::ContentDirectory::ImportResource(std::string requestedResource, int
     file.seekg(0, std::ios::beg);
     // Create HTTP headers
     std::stringstream response_headers;
-    response_headers << "HTTP/1.1 200 OK\r\n";
-    response_headers << "Content-Type: video/x-matroska\r\n"; // Adjust MIME type if necessary
-    response_headers << "Content-Length: " << file_size << "\r\n";
-    response_headers << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13 \r\n";
-    response_headers << "TransferMode.DLNA.ORG: Streaming \r\n";
-    response_headers << "Connection: close\r\n\r\n";
+    response_headers << "HTTP/1.1 206 Partial Content\r\n";
+    response_headers << "Cache-Control: max-age=0,must-revalidate\r\n";
+    response_headers << "Content-Range: bytes 632867631-633518526/633518527\r\n";
+    response_headers << "Accept-Ranges: bytes\r\n";
+    response_headers << "Content-Type: video/x-matroska\r\n";
+    response_headers << "Content-Length: " << "650896" << "\r\n";
+    response_headers << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13\r\n";
+    response_headers << "TransferMode.DLNA.ORG: Streaming\r\n";
+    response_headers << "\r\n";
+    std::cout << file_size << std::endl;
     // Send headers
     std::string headers       = response_headers.str();
     ssize_t     bytes_written = write(response_socket, headers.c_str(), headers.size());
-
-    // Stream the file in chunks
-    const int BUFFER_SIZE = 8192;
-    char      buffer[BUFFER_SIZE];
-
-    // file.read(buffer, BUFFER_SIZE);
-    // std::streamsize bytes_read = file.gcount();
-    // bytes_written              = write(response_socket, buffer, bytes_read);
+    const int   BUFFER_SIZE   = 8192;
+    char        buffer[BUFFER_SIZE];
     try {
         while (file) {
             file.read(buffer, BUFFER_SIZE);
@@ -274,4 +273,16 @@ void Server::ContentDirectory::ImportResource(std::string requestedResource, int
         }
     } catch (...) {}
     file.close();
+}
+
+void Server::ContentDirectory::Event(std::string& request, std::stringstream& response) {
+    //set headers
+    std::cout << "Responding to content directory event" << std::endl;
+    response << "HTTP/1.1 200 OK\r\n";
+    response << "Server: UPnp/1.0 DLNADOC/1.50 Platinum/1.0.5.13\r\n";
+    response << "Timeout: Second-1800\r\n";
+    response << "SID: uuid:2db225f8-14b3-4c97-b28e-b7e9bee15224\r\n";
+    response << "Connection: close \r\n";
+    response << "Content-Length: 0\r\n";
+    response << "\r\n";
 }

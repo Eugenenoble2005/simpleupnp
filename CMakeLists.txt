@@ -32,5 +32,6 @@ add_executable(
   src/helpers/global.cc
   src/helpers/escape_xml.cc
   src/helpers/encode_file_path.cc
+  src/server/ConnectionManager.cc
   src/server/ContentDirectory.cc)
 target_link_libraries(simpleupnp tinyxml2)

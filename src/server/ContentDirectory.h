@@ -31,6 +31,8 @@ namespace Server {
 
         static ContentDirectoryAction GetAction(std::string& request);
 
+        static void                   Event(std::string& request, std::stringstream& response);
+
       private:
         static void                               Browse(std::string& request, std::stringstream& response);
         static void                               ImportResource(std::string requestedResource, int response_socket);

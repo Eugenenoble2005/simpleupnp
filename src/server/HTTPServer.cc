@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <utility>
 #include "../helpers/logger.h"
+#include "ConnectionManager.h"
 #include "ContentDirectory.h"
 #include "../helpers/encode_file_path.h"
 void Server::HTTPServer::StartServer() {
@@ -94,35 +95,30 @@ void Server::HTTPServer::AcceptConnection(int& new_socket) {
 }
 
 void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
-    HttpRequest http_request = ParseHttpRequest(buffer);
+    HttpRequest http_request              = ParseHttpRequest(buffer);
+    bool        shouldWriteAndCloseSocket = true;
     // std::cout << "BUFFER WAS: " << buffer << std::endl;
     LogInfo("HTTP " + http_request.method + " RECIEVED TO: [" + http_request.uri + "]");
     std::stringstream response;
     if (http_request.uri == "/desc.xml" && http_request.method == "GET") {
         DeliverStaticFile("desc.xml", response);
-        const std::string full_response = response.str();
-        write(m_new_socket, full_response.c_str(), full_response.size());
-        close(m_new_socket);
     } else if (http_request.uri == "/ContentDirectory/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("content-directory-scpd.xml", response);
-        const std::string full_response = response.str();
-        write(m_new_socket, full_response.c_str(), full_response.size());
-        close(m_new_socket);
     } else if (http_request.uri == "/ConnectionManager/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("connection-manager-scpd.xml", response);
-        const std::string full_response = response.str();
-        write(m_new_socket, full_response.c_str(), full_response.size());
-        close(m_new_socket);
     } else if (http_request.uri == "/X_MS_MediaReceiverRegistrar/scpd.xml" && http_request.method == "GET") {
         DeliverStaticFile("ms-media-registrar-scpd.xml", response);
-        const std::string full_response = response.str();
-        write(m_new_socket, full_response.c_str(), full_response.size());
-        close(m_new_socket);
     } else if (http_request.uri == "/ContentDirectory/control.xml" && http_request.method == "POST") {
         Server::ContentDirectory::Control(http_request.content, response);
-        const std::string full_response = response.str();
-        write(m_new_socket, full_response.c_str(), full_response.size());
-        close(m_new_socket);
+        //these are actually /SUBSCRIBE requests and not POST. Will deal with that later
+    } else if (http_request.uri == "/ContentDirectory/event.xml" && http_request.method == "POST") {
+        // std::cout << buffer << std::endl;
+        ContentDirectory::Event(http_request.content, response);
+    } else if (http_request.uri == "/ConnectionManager/event.xml" && http_request.method == "POST") {
+        ContentDirectory::Event(http_request.content,response);
+        // std::cout << buffer << std::endl;
+    } else if (http_request.uri == "/ConnectionManager/control.xml" && http_request.method == "POST") {
+        Server::ConnectionManager::Control(http_request.content, response);
     }
     ////Media resource request
     else if (http_request.uri.find("/importResource") != std::string::npos && http_request.method == "GET") {
@@ -134,20 +130,24 @@ void Server::HTTPServer::HandleHttpRequest(const char* buffer) {
         while (std::getline(importResourceStream, line, '/')) {
             requestedResource = line;
         }
-        
+
         line.clear();
         //ignore thumbnail requests cause i aint finna deal with that now
-        if(requestedResource.find("?") != std::string::npos){
-            std::cout <<"A thumbain request?" << std::endl;
+        if (requestedResource.find("?") != std::string::npos) {
+            std::cout << "A thumbain request?" << std::endl;
             return;
             requestedResource = requestedResource.substr(0, requestedResource.find("?"));
         }
         std::cout << requestedResource << std::endl;
         Server::ContentDirectory::Control(requestedResource, response, ContentDirectoryAction::ImportResource, m_new_socket);
-
+        shouldWriteAndCloseSocket = false;
         return;
     }
-
+    if (shouldWriteAndCloseSocket == true) {
+        const std::string full_response = response.str();
+        write(m_new_socket, full_response.c_str(), full_response.size());
+        close(m_new_socket);
+    }
     response.clear();
 }
 
@@ -192,7 +192,7 @@ void Server::HTTPServer::DeliverStaticFile(std::string file_name, std::stringstr
     std::ifstream file(file_name);
     if (!file.is_open()) {
         LogError("Failed to read Content directory description XML File. Aborting...");
-        exit(0);
+        return;
     }
     std::stringstream file_buffer;
     file_buffer << file.rdbuf();
@@ -204,6 +204,7 @@ void Server::HTTPServer::DeliverStaticFile(std::string file_name, std::stringstr
     //  response << "Connection: close\r\n";
     response << "\r\n"; // End of headers
     response << reply_buffer;
+    file.close();
 }
 void Server::HTTPServer::CloseServer() {
     LogInfo("Closing server Sockets");
